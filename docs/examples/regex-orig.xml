@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE udf SYSTEM "udf_extension.dtd">
+<udf name="regex">
+
+  <maintainer>
+    <name>Hartmut Holzgraefe</name>
+    <email>hartmut@php.net</email>
+  </maintainer>
+
+  <license>PHP</license>
+
+  <code role="header">
+<![CDATA[
+#include <sys/types.h>
+#include <regex.h>
+]]>  
+  </code>
+
+
+  <function name="regex" returns="string" null="yes">
+    <param name="pattern" type="string"/>
+    <param name="text"    type="string"/>
+
+    <data>
+     <element name="expr"    type="regex_t"/>
+     <element name="dynamic" type="int" />
+    </data>               
+
+    <init>
+<![CDATA[
+    if (pattern) {
+        int stat;
+
+        stat  = regcomp(&data->expr, (const char *)"oo.", 0);
+        if (stat) {
+            sprintf(message, "regcomp failed (error: %d)", stat);
+            return 1; 
+        }
+
+        data->dynamic = 0;
+    } else {
+        data->dynamic = 1;
+    }
+]]>
+    </init>
+
+    <deinit>
+<![CDATA[
+    if (!data->dynamic) {
+        regfree(&data->expr);
+    }
+]]>
+    </deinit>
+
+    <code>
+<![CDATA[
+	regex_t    expr;
+	regmatch_t match[10];
+	int stat;
+    
+	stat = regcomp(&expr, "f.o", 0);
+
+    if (stat) { printf("regcomp %d\n", stat); exit(3);}
+
+	stat = regexec(&expr, "xffoobb", 9, match, 0);
+
+    if (stat) { printf("regcomp %d\n", stat); exit(3);}
+
+
+  RETURN_STRINGL("xxx",3);
+
+]]>
+    </code>
+  </function>
+
+</udf>

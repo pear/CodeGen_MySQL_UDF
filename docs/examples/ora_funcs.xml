@@ -1,0 +1,1461 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE udf SYSTEM "udf_extension.dtd">
+<!--
+
+TODO:
+
+- not implemented:
+ - NEW_TIME
+ - TO_CHAR(number) / TO_DATE / TO_NUMBER / TRUNC(date)
+
+- these two return mixed types, how to implement this?
+  - NVL
+  - NVL2
+
+- REGR_... -> swapped x and y?
+
+- all date/time related functions only support the unix 
+  timestamp range (1970-203x) for now
+
+Stuff that won't ever be done (too Oracle specific)
+ - all analytic functions
+ - all BLOB/CLOB functions
+ - RAW, REF, ROWID related functions
+ - NLS related functions and features
+
+
+
+
+Oracle functions are (according to the 8i manual):
+-: missing, +: existing, /: partly compatible, *: in this extension
+
++ ABS 14
++ ACOS 14
+* ADD_MONTHS 15
++ ASCII  16 
+- BFILENAME  19 
+- BITAND  20 
++ CEIL  21 
+- CHARTOROWID  21 
++ CHR  22 
++ CONCAT  23 
+? CONVERT  24 
+* CORR  25 
++ COS  26 
++ COSH  27 
++ COUNT  27 
+* COVAR_POP  29 
+* COVAR_SAMP 31 
+- CUME_DIST  33 
+- DENSE_RANK  34 
+- DEREF  35 
+- DUMP  36 
+- EMPTY_[B | C]LOB  37 
++ EXP  38 
+- FIRST_VALUE  38 v 
++ FLOOR  40 
++ GREATEST  40 
+- GROUPING  41 
+- HEXTORAW  42 
+* INITCAP  43 
+/ INSTR  43 
+- INSTRB  44 
+- LAG  45 
++*LAST_DAY  46 
+- LAST_VALUE  47
+- LEAD  49 
++ LEAST  50 
++ LENGTH  51 
+- LENGTHB  51 
++ LN  52 
++ LOG  52 
++ LOWER  53 
++ LPAD 53 
+/ LTRIM  54 
+- MAKE_REF  55 
++ MAX  56 
++ MIN  58 
++ MOD  59 
+- MONTHS_BETWEEN  60 
+- NEW_TIME  61 
++ NEXT_DAY  62 
+- NLS_CHARSET_DECL_LEN  62 
+- NLS_CHARSET_ID  63 
+- NLS_CHARSET_NAME  64 
+- NLS_INITCAP  64 
+- NLS_LOWER  65 
+- NLSSORT  66 
+- NLS_UPPER  67 
+- NTILE  67 
+- NUMTODSINTERVAL  69 vi 
+- NUMTOYMINTERVAL  70 
+- NVL  71 
+- NVL2  72 
+- PERCENT_RANK  73 
++ POWER  74 
+- RANK  74 
+- RATIO_TO_REPORT  75 
+- RAWTOHEX  76 
+- REF  77 
+- REFTOHEX  78 
+* REGR_ (linear regression) functions  78 
+/ REPLACE  85 
++ ROUND (number function)  86 
+- ROUND (date function)  87 
+- ROW_NUMBER  87 
+- ROWIDTOCHAR  89 
+/ RPAD  89 
+/ RTRIM  90 
++ SIGN  90 
++ SIN  91 
++ SINH  91 
++ SOUNDEX  92 
++ SQRT  93 
+* STDDEV  93 
+* STDDEV_POP  95 
+* STDDEV_SAMP  96 
++ SUBSTR  98 
+- SUBSTRB  99 
++ SUM  99 
+- SYS_CONTEXT  101 
+- SYS_GUID  105 
++ SYSDATE  106 
++ TAN  107 
++ TANH  107 
+* TO_CHAR (date conversion)  108 
+- TO_CHAR (number conversion)  109 
+- TO_DATE  110 
+- TO_LOB  111 
+- TO_MULTI_BYTE  112 
+- TO_NUMBER  112 
+- TO_SINGLE_BYTE  113 
+- TRANSLATE  113 
+- TRANSLATE  USING  114 
++ TRIM  116 
+- TRUNC (number function)  117 -> see TRUNCATE()
+- TRUNC (date function)  117 
+- UID  118 
++ UPPER 118 
++ USER  119 
+- USERENV  120 
+- VALUE  121 
+* VAR_POP  122 
+* VAR_SAMP  123 
+* VARIANCE  125 
+* VSIZE  126 
+- ROUND and TRUNC Date Functions 127 
+- User-Defined Functions 128
+
+-->
+<extension name="ora_funcs">
+
+  <maintainer>
+    <name>Hartmut Holzgraefe</name>
+    <email>hartmut@php.net</email>
+  </maintainer>
+
+  <license>LGPL</license>
+
+  <deps>
+    <file name="oracle_date.l"/>
+    <file name="ora_funcs.xml"/>
+  </deps>
+
+  <code role="header">
+<![CDATA[
+#include <ctype.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+int ora_to_char(char *format, char *datestr, char *buffer, int maxlen);
+
+#ifdef  __cplusplus
+}
+#endif
+]]>  
+  </code>
+
+  <!-- checked -->
+  <function type="aggregate" name="var_pop" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count <= 1)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN((data->sum_e2 - data->sum_e * data->sum_e / data->count) / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="var_samp" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count <= 1)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN((data->sum_e2 - data->sum_e * data->sum_e / data->count) / (data->count -1));
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="variance" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  switch (data->count)
+  {
+    case 0:
+      *is_null = 1;
+      DBUG_RETURN(0.0);
+
+    case 1:
+      DBUG_RETURN(0.0);
+
+    default:
+      DBUG_RETURN((data->sum_e2 - data->sum_e * data->sum_e / data->count) / (data->count -1));
+  }
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="stddev_pop" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count <= 1)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN(sqrt((data->sum_e2 - data->sum_e * data->sum_e / data->count) / data->count));
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="stddev_samp" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count <= 1)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN(sqrt((data->sum_e2 - data->sum_e * data->sum_e / data->count) / (data->count -1)));
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="stddev" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+        data->sum_e2   = e*e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+        data->sum_e2   += e*e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+        data->sum_e2   = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  switch (data->count)
+  {
+    case 0:
+      *is_null = 1;
+      DBUG_RETURN(0.0);
+
+    case 1:
+      DBUG_RETURN(0.0);
+
+    default:
+      DBUG_RETURN(sqrt((data->sum_e2 - data->sum_e * data->sum_e / data->count) / data->count));
+  }
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+   <!-- checked -->
+   <function type="aggregate" name="covar_pop" returns="real" null="yes">
+    <param name="e1" type="real"/>
+    <param name="e2" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e1"   type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+      <element name="sum_e1e2" type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count = 1;
+        data->sum_e1   = e1;
+        data->sum_e2   = e2;
+        data->sum_e1e2 = e1*e2;  
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count++;
+        data->sum_e1   += e1;
+        data->sum_e2   += e2;
+        data->sum_e1e2 += e1*e2;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_e1   = 0.0;
+        data->sum_e2   = 0.0;
+        data->sum_e1e2 = 0.0;  
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count < 2)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN((data->sum_e1e2 - data->sum_e1*data->sum_e2/data->count) / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+   <!-- checked -->
+   <function type="aggregate" name="covar_samp" returns="real" null="yes">
+    <param name="e1" type="real"/>
+    <param name="e2" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e1"   type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+      <element name="sum_e1e2" type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count = 1;
+        data->sum_e1   = e1;
+        data->sum_e2   = e2;
+        data->sum_e1e2 = e1*e2;  
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count++;
+        data->sum_e1   += e1;
+        data->sum_e2   += e2;
+        data->sum_e1e2 += e1*e2;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_e1   = 0.0;
+        data->sum_e2   = 0.0;
+        data->sum_e1e2 = 0.0;  
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  DBUG_RETURN((data->sum_e1e2 - data->sum_e1*data->sum_e2/data->count)/(data->count - 1));
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+   <!-- checked -->
+   <function type="aggregate" name="regr_count" returns="int" null="yes">
+    <param name="x" type="real"/>
+    <param name="y" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count = 1;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+    data->count = 0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0);
+  }
+
+  DBUG_RETURN(data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_avgx" returns="real" null="yes">
+    <param name="y" type="real"/>
+    <param name="x" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count = 1;
+        data->sum_x = x;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  DBUG_RETURN(data->sum_x / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_avgy" returns="real" null="yes">
+    <param name="y" type="real"/>
+    <param name="x" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count = 1;
+        data->sum_y = y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_y += y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_y = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  DBUG_RETURN(data->sum_y / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_slope" returns="real" null="yes">
+    <param name="x" type="real"/>
+    <param name="y" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+      <element name="sum_xy"   type="double"   default="0.0"/>
+      <element name="sum_yy"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_x  = x;
+        data->sum_y  = y;
+        data->sum_xy = x*y;
+        data->sum_yy = y*y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+        data->sum_y += y;
+        data->sum_xy += x*y;
+        data->sum_yy += y*y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+        data->sum_y = 0.0;
+        data->sum_xy = 0.0;
+        data->sum_yy = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  
+  double c = (data->sum_xy - data->sum_x * data->sum_y / data->count) / data->count;
+  double v = (data->sum_yy - data->sum_y * data->sum_y / data->count) / data->count;
+
+  DBUG_RETURN(c / v);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_intercept" returns="real" null="yes">
+    <param name="x" type="real"/>
+    <param name="y" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+      <element name="sum_xy"   type="double"   default="0.0"/>
+      <element name="sum_yy"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_x  = x;
+        data->sum_y  = y;
+        data->sum_xy = x*y;
+        data->sum_yy = y*y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+        data->sum_y += y;
+        data->sum_xy += x*y;
+        data->sum_yy += y*y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+        data->sum_y = 0.0;
+        data->sum_xy = 0.0;
+        data->sum_yy = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  
+  double c  = (data->sum_xy - data->sum_x * data->sum_y / data->count) / data->count;
+  double v  = (data->sum_yy - data->sum_y * data->sum_y / data->count) / data->count;
+  double ax = data->sum_x / data->count;
+  double ay = data->sum_y / data->count;
+
+  DBUG_RETURN(ax - (c / v) * ay);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_sxx" returns="real" null="yes">
+    <param name="y" type="real"/>
+    <param name="x" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+      <element name="sum_x2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_x  = x;
+        data->sum_x2 = x*x;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+        data->sum_x2 += x*x;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+        data->sum_x2 = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  
+  DBUG_RETURN(data->sum_x2 - data->sum_x * data->sum_x / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_syy" returns="real" null="yes">
+    <param name="y" type="real"/>
+    <param name="x" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+      <element name="sum_y2"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_y  = y;
+        data->sum_y2 = y*y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_y += y;
+        data->sum_y2 += y*y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_y = 0.0;
+        data->sum_y2 = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  
+  DBUG_RETURN(data->sum_y2 - data->sum_y * data->sum_y / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_sxy" returns="real" null="yes">
+    <param name="x" type="real"/>
+    <param name="y" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+      <element name="sum_xy"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_x  = x;
+        data->sum_y  = y;
+        data->sum_xy = x*y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+        data->sum_y += y;
+        data->sum_xy += x*y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+        data->sum_y = 0.0;
+        data->sum_xy = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+  
+  DBUG_RETURN(data->sum_xy - data->sum_x * data->sum_y / data->count);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+
+  <!-- checked -->
+  <function type="aggregate" name="regr_r2" returns="real" null="yes">
+    <param name="x" type="real"/>
+    <param name="y" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_x"    type="double"   default="0.0"/>
+      <element name="sum_y"    type="double"   default="0.0"/>
+      <element name="sum_xx"   type="double"   default="0.0"/>
+      <element name="sum_yy"   type="double"   default="0.0"/>
+      <element name="sum_xy"   type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count  = 1;
+        data->sum_x  = x;
+        data->sum_y  = y;
+        data->sum_xx = x*x;
+        data->sum_yy = y*y;
+        data->sum_xy = x*y;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!x_is_null && !y_is_null) {
+        data->count++;
+        data->sum_x += x;
+        data->sum_y += y;
+        data->sum_xx += x*x;
+        data->sum_yy += y*y;
+        data->sum_xy += x*y;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_x = 0.0;
+        data->sum_y = 0.0;
+        data->sum_xx = 0.0;
+        data->sum_yy = 0.0;
+        data->sum_xy = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (!data->count)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  double vy = (data->sum_yy - data->sum_y * data->sum_y / data->count) / data->count;  
+  if (vy == 0.0)
+  {
+    *is_null = 1;
+    DBUG_RETURN(0.0);
+  }
+
+  *is_null = 0;
+
+  double vx = (data->sum_xx - data->sum_x * data->sum_x / data->count) / data->count;  
+  if (vx == 1.0) DBUG_RETURN(1.0);
+
+  double c  = (data->sum_xy - data->sum_x * data->sum_y / data->count) / data->count;
+  
+  double r = c / ( sqrt(vx) * sqrt(vy));
+
+  DBUG_RETURN(r*r);
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+  <!-- checked -->
+  <function name="initcap" returns="string">
+   <param name="text" type="string"/>
+   <code>
+<![CDATA[
+    int i, ws_flag = 1;
+    char *p = result;
+
+    if (!text) {
+        *is_null = 1;
+        DBUG_RETURN(NULL);
+    }
+
+    for (i = 0; i < text_len; i++) {
+        if (ws_flag && isalpha(*text)) {
+            *p = toupper(*text);
+        } else {
+            *p = *text;
+        }
+        ws_flag = !isalnum(*text++);
+        *p++;
+    }
+
+    *is_null = 0;
+    *length = text_len;
+    DBUG_RETURN(result);
+]]>
+   </code>
+  </function>
+
+
+
+  <!-- crashes -->
+  <function name="to_char" returns="string" length="256">
+    <param name="p_date"   type="string"/>
+    <param name="p_format" type="string"/>
+    <code>
+<![CDATA[
+    char * format = strndup(p_format, p_format_len);
+    char * date = strndup(p_date, p_date_len);
+
+    if (!ora_to_char(format, date, result, 256)) {
+        *error = 1;
+    }
+    free(format);
+    free(date);
+
+    *length = strlen(result);
+    DBUG_RETURN(result);
+]]>
+    </code>
+  </function>
+
+<!-- doesn't work this way, function names have to be unique
+     have to switch behaviour based on argument type here ...
+  <function name="to_char" returns="string" length="256">
+    <param name="p_number" type="real"/>
+    <param name="p_format" type="string"/>
+  </function>
+-->
+
+  <!-- checked -->
+  <function name="next_day" returns="string" length="20">
+    <param name="date" type="string"/>
+    <param name="day"  type="string"/>
+    <code>
+<![CDATA[
+      struct tm tm;
+      int n, wday;
+
+      *is_null = 1;
+
+	  if      (!strncasecmp("sun", day, 3)) wday = 0;
+	  else if (!strncasecmp("mon", day, 3)) wday = 1;
+	  else if (!strncasecmp("tue", day, 3)) wday = 2;
+	  else if (!strncasecmp("wed", day, 3)) wday = 3;
+	  else if (!strncasecmp("thu", day, 3)) wday = 4;
+	  else if (!strncasecmp("fri", day, 3)) wday = 5;
+	  else if (!strncasecmp("sat", day, 3)) wday = 6;
+	  else DBUG_RETURN(NULL);
+
+      n = sscanf(date, "%d-%d-%d %d:%d:%d", &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday)
+                                          , &(tm.tm_hour), &(tm.tm_min), &(tm.tm_sec));
+
+      switch(n) {
+	    case 3: // date only
+		  tm.tm_hour = 0;
+          tm.tm_min  = 0;
+		  tm.tm_sec  = 0;
+		case 6: // date and time
+		  tm.tm_mon--;
+		  tm.tm_year -= 1900;
+		  tm.tm_mday++;
+		  break;
+		default:
+          DBUG_RETURN(NULL);
+      }
+
+	  while(1) {
+	    time_t t = mktime(&tm);
+        if (t < 0) DBUG_RETURN(NULL);
+
+        if (tm.tm_wday == wday) break;
+
+        tm.tm_mday++;
+	  }      
+
+      *is_null = 0;
+    
+      sprintf(result, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d"
+                    , tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday
+                    , tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+      *length = strlen(result);
+      DBUG_RETURN(result);
+]]>
+    </code>
+  </function>
+
+  <!-- checked -->
+  <function name="last_day" returns="string" length="20">
+    <param name="date" type="string"/>
+    <code>
+<![CDATA[
+      struct tm tm;
+      int n;
+
+      *is_null = 1;
+
+      n = sscanf(date, "%d-%d-%d %d:%d:%d", &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday)
+                                          , &(tm.tm_hour), &(tm.tm_min), &(tm.tm_sec));
+
+      switch(n) {
+	    case 3: // date only
+		  tm.tm_hour = 0;
+          tm.tm_min  = 0;
+		  tm.tm_sec  = 0;
+		case 6: // date and time
+		  tm.tm_mon--;
+		  tm.tm_year -= 1900;
+		  tm.tm_mday++;
+		  break;
+		default:
+          DBUG_RETURN(NULL);
+      }
+
+	  time_t t = mktime(&tm);
+      if (t < 0) DBUG_RETURN(NULL);
+
+      *is_null = 0;
+
+      switch (tm.tm_mon + 1) {
+        case 1:
+        case 3:
+        case 6:
+        case 7:
+        case 8:
+        case 10:
+        case 12:
+          tm.tm_mday = 31;
+          break;
+        case 2:
+          tm.tm_mday = tm.tm_year % 4 ? 28 : 29;
+          break;
+        default:
+          tm.tm_mday = 30;
+          break;
+      }
+    
+      sprintf(result, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d"
+                    , tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday
+                    , tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+      *length = strlen(result);
+      DBUG_RETURN(result);
+]]>
+    </code>
+  </function>
+
+  <!-- not checked -->
+  <function name="add_month" returns="string" length="20">
+    <param name="date" type="string"/>
+    <param name="num"  type="int"/>
+    <code>
+<![CDATA[
+      struct tm tm;
+      int n;
+
+      *is_null = 1;
+
+      n = sscanf(date, "%d-%d-%d %d:%d:%d", &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday)
+                                          , &(tm.tm_hour), &(tm.tm_min), &(tm.tm_sec));
+
+      switch(n) {
+	    case 3: // date only
+		  tm.tm_hour = 0;
+          tm.tm_min  = 0;
+		  tm.tm_sec  = 0;
+		case 6: // date and time
+		  tm.tm_mon--;
+		  tm.tm_year -= 1900;
+		  tm.tm_mday++;
+		  break;
+		default:
+          DBUG_RETURN(NULL);
+      }
+
+      tm.tm_mon += num;
+    
+	  time_t t = mktime(&tm);
+      if (t < 0) DBUG_RETURN(NULL);
+
+      *is_null = 0;
+
+      sprintf(result, "%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d"
+                    , tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday
+                    , tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+      *length = strlen(result);
+      DBUG_RETURN(result);
+]]>
+    </code>
+  </function>
+
+  <!-- not checked -->
+  <function name="month_between" returns="real">
+    <param name="date1" type="string"/>
+    <param name="date2" type="string"/>
+    <code>
+<![CDATA[
+      char ld[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+      struct tm tm1, tm2;
+      int ld1, ld2;
+      double result;
+
+      *is_null = 1;
+
+      if (3 != sscanf(date1, "%d-%d-%d", &(tm1.tm_year), &(tm1.tm_mon), &(tm1.tm_mday))) {
+          DBUG_RETURN(0.0);
+      }
+
+      if (3 != sscanf(date2, "%d-%d-%d", &(tm2.tm_year), &(tm2.tm_mon), &(tm2.tm_mday))) {
+          DBUG_RETURN(0.0);
+      }
+
+	  time_t t1 = mktime(&tm1);
+      if (t1 < 0) DBUG_RETURN(0.0);
+
+	  time_t t2 = mktime(&tm2);
+      if (t2 < 0) DBUG_RETURN(0.0);
+
+      ld1 = ld[tm1.tm_mon];
+      if ((ld1 == 28) && (tm1.tm_year % 4 == 0) && ((tm1.tm_year % 100 != 0) || (tm1.tm_year % 400 == 0)))  {
+        ld1++; 
+      }
+
+      ld2 = ld[tm1.tm_mon];
+      if ((ld2 == 28) && (tm1.tm_year % 4 == 0) && ((tm1.tm_year % 100 != 0) || (tm1.tm_year % 400 == 0)))  {
+        ld2++; 
+      }
+
+      *is_null = 0;
+
+      result = (tm1.tm_year - tm2.tm_year)*12 + (tm1.tm_mon - tm2.tm_mon);
+
+      if (ld1 != tm1.tm_mday || ld2 != tm2.tm_mday) {
+        result += (tm1.tm_mday - tm2.tm_mday)/31;
+      }
+
+      DBUG_RETURN(result);
+]]>
+    </code>
+  </function>
+
+   <!-- recheck
+      -0.64... instead of -0.69.... in oracle manual
+      COVAR_POP(sal, comm) / (STDDEV_POP(sal) * STDDEV_POP(comm)) also gives -0.64
+      so it might be a difference in data (although i can't spot any)
+      or in the oracle docs as COVAR_POP and STDDEV_POP have both been ok in testing
+   -->         
+   <function type="aggregate" name="corr" returns="real" null="yes">
+    <param name="e1" type="real"/>
+    <param name="e2" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e1"   type="double"   default="0.0"/>
+      <element name="sum_e1e1" type="double"   default="0.0"/>
+      <element name="sum_e2"   type="double"   default="0.0"/>
+      <element name="sum_e2e2" type="double"   default="0.0"/>
+      <element name="sum_e1e2" type="double"   default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count = 1;
+        data->sum_e1   = e1;
+        data->sum_e2   = e2;
+        data->sum_e1e1 = e1*e1;  
+        data->sum_e2e2 = e2*e2;  
+        data->sum_e1e2 = e1*e2;  
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e1_is_null && !e2_is_null) {
+        data->count++;
+        data->sum_e1   += e1;
+        data->sum_e2   += e2;
+        data->sum_e1e1 += e1*e1;
+        data->sum_e2e2 += e2*e2;
+        data->sum_e1e2 += e1*e2;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count = 0;
+        data->sum_e1   = 0.0;
+        data->sum_e2   = 0.0;
+        data->sum_e1e1 = 0.0;  
+        data->sum_e2e2 = 0.0;  
+        data->sum_e1e2 = 0.0;  
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count < 1)
+  {
+    *is_null = 1;
+  }
+
+  *is_null = 0;
+  double c  = (data->sum_e1e2 - data->sum_e1 * data->sum_e2 / data->count) / data->count;
+  double s1 = sqrt((data->sum_e1e1 - data->sum_e1 * data->sum_e1 / data->count) / data->count);
+  double s2 = sqrt((data->sum_e2e2 - data->sum_e2 * data->sum_e2 / data->count) / data->count);
+
+  DBUG_RETURN(c / ( s1 * s2));      
+
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+</extension>

@@ -1,0 +1,15 @@
+Q: What if a udf functions name is supposed to mimic a C library function name?
+A: Make creative use of caps as UDF names are case insensitive
+   e.g. when exporting foobar as UDF foobar you can call the C function FooBar
+   or FOOBAR
+
+Q: How does Oracle do this? They have a SQL syntax to import plain C library
+   functions right away without wrapper code but i forgot how to do it ...
+
+A: It looks like this:
+  
+    CREATE FUNCTION get_val ( x_val IN NUMBER, y_val IN NUMBER, image IN LONG RAW ) 
+      RETURN BINARY_INTEGER 
+      AS LANGUAGE C NAME "c_get_val" LIBRARY c_utils PARAMETERS (...); 
+
+   Details should be in "Oracle8i Application Developers Guide - Fundamentals"

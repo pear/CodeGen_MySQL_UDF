@@ -1,0 +1,27 @@
+#!/usr/local/bin/php -Cq
+<?php
+
+/**
+* Console script to generate UDF extensions from command line
+*
+* @author Hartmut Holzgraefe <hartmut@six.de>
+* @version $Id$
+*/
+
+// includes
+require_once "CodeGen/Command.php";
+
+require_once "CodeGen/MySQL/UDF/Extension.php";
+require_once "CodeGen/MySQL/UDF/ExtensionParser.php";
+#require_once "CodeGen/Element.php";
+
+// create extension object
+$extension = new CodeGen_MySQL_UDF_Extension;
+
+$command = new CodeGen_Command($extension);
+
+$parser = new CodeGen_MySQL_UDF_ExtensionParser($extension);
+
+$command->execute($parser);
+
+?>

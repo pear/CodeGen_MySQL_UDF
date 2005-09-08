@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE udf SYSTEM "udf_extension.dtd">
+<udf name="example">
+
+  <maintainer>
+    <name>Hartmut Holzgraefe</name>
+    <email>hartmut@php.net</email>
+  </maintainer>
+
+  <license>PHP</license>
+
+  <function name="ex_trace" returns="int">
+	 <code>
+	   fprintf(stderr,"\nex_trace::code\n");
+		 fflush(stderr);
+		 return 1;
+   </code>
+	 <init>
+	   fprintf(stderr,"\nex_trace::init\n");
+		 fflush(stderr);
+   </init>
+	 <deinit>
+	   fprintf(stderr,"\nex_trace::deinit\n");
+		 fflush(stderr);
+   </deinit>
+	</function>
+
+  <function name="ex_sqr" returns="real">
+    <param name="p1" type="real"/>
+    <param name="s1" type="string" optional="yes"/>
+		<init>
+		  args->arg_type[0] = REAL_RESULT;
+		</init>
+    <code>
+      return p1*p1;
+    </code>
+  </function>
+
+  <function name="ex_avg" type="aggregate" returns="real" null="yes">
+    <param name="e" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e"    type="double" default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    if (!e_is_null) {
+        data->count    = 1;
+        data->sum_e    = e;
+    }
+]]>
+    </start>
+    <add>
+<![CDATA[
+    if (!e_is_null) {
+        data->count++;
+        data->sum_e    += e;
+    }
+]]>
+    </add>
+    <clear>
+<![CDATA[
+        data->count    = 0;
+        data->sum_e    = 0.0;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  if (data->count <= 1)
+  {
+    *is_null = 1;
+    return 0.0;
+  }
+
+  *is_null = 0;
+  return data->sum_e / data->count;
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+  <function name="ex_strrev" returns="string"> 
+    <param name="text" type="string"/>
+		<code>
+		  char *d=result, *s = text + text_len;
+			while (--s >= text) {
+			  *d++ = *s;
+			}
+			*d = '\0';
+			*length = text_len + 1;
+		</code>
+	</function>
+
+</udf>

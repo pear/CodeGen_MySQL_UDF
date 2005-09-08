@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE udf SYSTEM "udf_extension.dtd">
+<udf name="corr">
+
+  <maintainer>
+    <name>Hartmut Holzgraefe</name>
+    <email>hartmut@php.net</email>
+  </maintainer>
+
+  <license>LGPL</license>
+
+   <function type="aggregate" name="corr" returns="real" null="yes">
+    <param name="e1" type="real"/>
+    <param name="e2" type="real"/>
+    <data>
+      <element name="count"    type="int"    default="0"/>
+      <element name="sum_e1"   type="double" default="0.0"/>
+      <element name="sum_e1e1" type="double" default="0.0"/>
+      <element name="sum_e2"   type="double" default="0.0"/>
+      <element name="sum_e2e2" type="double" default="0.0"/>
+      <element name="sum_e1e2" type="double" default="0.0"/>
+    </data>
+    <start>
+<![CDATA[
+    DBUG_ENTER("corr::start");
+    if (!e1_is_null && !e2_is_null) {
+        data->count = 1;
+        data->sum_e1   = e1;
+        data->sum_e2   = e2;
+        data->sum_e1e1 = e1*e1;  
+        data->sum_e2e2 = e2*e2;  
+        data->sum_e1e2 = e1*e2;  
+    }
+    DBUG_VOID_RETURN;
+]]>
+    </start>
+    <add>
+<![CDATA[
+    DBUG_ENTER("corr::add");
+    if (!e1_is_null && !e2_is_null) {
+        data->count++;
+        data->sum_e1   += e1;
+        data->sum_e2   += e2;
+        data->sum_e1e1 += e1*e1;
+        data->sum_e2e2 += e2*e2;
+        data->sum_e1e2 += e1*e2;
+    }
+    DBUG_VOID_RETURN;
+]]>
+    </add>
+    <clear>
+<![CDATA[
+    DBUG_ENTER("corr::clear");
+        data->count = 0;
+        data->sum_e1   = 0.0;
+        data->sum_e2   = 0.0;
+        data->sum_e1e1 = 0.0;  
+        data->sum_e2e2 = 0.0;  
+        data->sum_e1e2 = 0.0;  
+    DBUG_VOID_RETURN;
+]]>
+    </clear>
+    <result>
+<![CDATA[
+  DBUG_ENTER("corr::result");
+	DBUG_PRINT("corr::result", ("line %d", __LINE__));
+  if (data->count < 1)
+  {
+	DBUG_PRINT("corr::result", ("line %d", __LINE__));
+    DBUG_PRINT("corr::result", ("returning NULL"));
+	DBUG_PRINT("corr::result", ("line %d", __LINE__));
+    *is_null = 1;
+	DBUG_PRINT("corr::result", ("line %d", __LINE__));
+    DBUG_RETURN( 0.0 );
+  }
+
+	DBUG_PRINT("corr::result", ("line %d (%p)", __LINE__, is_null));
+  *is_null = 0;
+	DBUG_PRINT("corr::result", ("line %d", __LINE__));
+
+    DBUG_PRINT("corr::result", ("calculating c"));
+  double c  = (data->sum_e1e2 - data->sum_e1 * data->sum_e2 / data->count) / data->count;
+    DBUG_PRINT("corr::result", ("calculating s1"));
+  double s1 = sqrt((data->sum_e1e1 - data->sum_e1 * data->sum_e1 / data->count) / data->count);
+    DBUG_PRINT("corr::result", ("calculating s2"));
+  double s2 = sqrt((data->sum_e1e1 - data->sum_e1 * data->sum_e1 / data->count) / data->count);
+
+    DBUG_PRINT("corr::result", ("calculating result"));
+
+  DBUG_RETURN( c / ( s1 * s2) );
+]]>
+    </result>
+    <documentation>
+    </documentation>
+  </function>
+
+</udf>

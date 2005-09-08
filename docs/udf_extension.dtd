@@ -1,0 +1,22 @@
+<!ELEMENT udf (function|aggregate)* >
+<!ATTLIST udf
+  name CDATA #REQUIRED
+>
+
+<!ELEMENT function (param*|data|init|deinit|code|documentation)>
+<!ATTLIST function
+  name    CDATA #REQUIRED
+  returns (integer|real|string) #REQUIRED
+>
+
+<!ELEMENT aggregate (param*|data|init|deinit|start|add|result|documentation)>
+<!ATTLIST aggregate
+  name    CDATA #REQUIRED
+  returns (integer|real|string) #REQUIRED
+>
+
+<!ELEMENT para CDATA>
+<!ATTLIST para
+  name CDATA #REQUIRED
+  type (integer|real|string) #REQUIRED
+>
