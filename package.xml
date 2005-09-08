@@ -49,7 +49,6 @@
           <dir name="examples">
             <file role="doc" name="example.xml"/>
             <file role="doc" name="corr.xml"/>
-            <file role="doc" name="example.xml"/>
             <file role="doc" name="ora_funcs.xml"/>
             <file role="doc" name="oracle_date.l"/>
             <file role="doc" name="rlimit.xml"/>
