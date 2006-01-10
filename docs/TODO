@@ -11,7 +11,9 @@
   - custom make rules
   => can be mostly delegated to automake?
 
-- mysql version specific stuff (is there any yet?)
+- mysql version specific stuff
+ - no real version specific changes to the actual API up to 5.0
+ - but some internal function names changed, e.g regcomp() became my_regcomp()
 
 - support for constant parameters in init function
 
