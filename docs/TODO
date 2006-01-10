@@ -1,19 +1,28 @@
 - generate UDF documentation
+
 - add --udf-cflags switch to mysql_config 
   take care that debug settings and CFLAGS from
 	environment are preserved
+
 - configure/make stuff 
   - required headers
   - required libs
   - search pathes for libs and headers
   - custom make rules
   => can be mostly delegated to automake?
+
 - mysql version specific stuff (is there any yet?)
+
 - support for constant parameters in init function
+
 - finish datetime support (relies on non-public header files now)
+
 - support for other pseudo-types: "mixed", "enum"(?), ...
+
 - test for HAVE_DLOPEN in configure step
+
 - debug configure option should be aware of -DDBUG_* in CFLAGS
+
 - TEST system
   current approach: use PHP extension myudf and
   input files similar to PHPs .phpt files ...
