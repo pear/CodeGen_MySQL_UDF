@@ -265,8 +265,12 @@ Usage:
      tag. The parameter name is defined by the <literal>name=...</literal> attribute
      and has to be a valid C variable name. The parameter type can be one of
      <literal>string</literal>, <literal>int</literal> or <literal>real</literal>
-     and is defined using the <literal>type=...</literal>
-     attribute.
+     and is defined using the <literal>type=...</literal> attribute.
+    </para>
+    <para>
+     Optional paramters may be specified using the <literal>optional='yes'<literal>
+     attribute. Once a parameter has been declared optional all following parameters 
+     have to be optional, too.
     </para>
     <para>
 	 For each parameter set of C variables starting with the same name is
