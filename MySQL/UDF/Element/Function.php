@@ -313,9 +313,10 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  string  parameter name
      * @param  string  parameter type
      * @param  string  optional?
+     * @param  string  default value
      * @return bool    success status
      */
-    function addParam($name, $type, $optional = null) {
+    function addParam($name, $type, $optional = null, $default = null) {
         if (isset($this->params[$name])) {
             return PEAR::raiseError("duplicate parameter name '$name'");
         }
@@ -368,11 +369,15 @@ class CodeGen_MySQL_UDF_Element_Function
             if ($this->optionalParams) {
                 return PEAR::raiseError("only optional parameters are allowed after the first optonal");
             }
+            if ($this->default !== null) {
+                return PEAR::raiseError("only optional parameters may have default values");
+            }
             $this->mandatoryParams++;
         }
+
         $this->totalParams++;
 
-        $this->params[$name] = array("type"=>$type, "optional"=>$optional);
+        $this->params[$name] = array("type"=>$type, "optional"=>$optional, "default"=>$default);
 
         return true;
     }

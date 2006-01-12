@@ -134,7 +134,7 @@ class CodeGen_MySQL_UDF_ExtensionParser
                 return PEAR::raiseError("type attribut for parameter missing");
         }
         
-        return $this->helper->addParam($attr['name'], $attr['type'], @$attr['optional']);
+        return $this->helper->addParam($attr['name'], $attr['type'], @$attr['optional'], @$attr['default']);
     }
 
     function tagstart_function_data($attr) 
