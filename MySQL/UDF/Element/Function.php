@@ -600,24 +600,44 @@ class CodeGen_MySQL_UDF_Element_Function
             
         // parameter access variables
         foreach ($this->params as $name => $param) {
-            switch ($param['type']) {
-            case 'string':
-                echo "    char *$name = NULL;\n";
-                echo "    long long {$name}_len = 0;\n";
-                break;
-            case 'int':
-                echo "    long long $name = 0;\n";
-                echo "    int {$name}_is_null = 1;\n";
-                break;
-            case 'real':
-                echo "    double $name = 0.0;\n";
-                echo "    int {$name}_is_null = 1;\n";
-                break;
-            case 'datetime':
-                echo "    MYSQL_TIME $name;\n";
-                echo "    int {$name}_is_null = 1;\n";
-                break;
+            if ($param['default'] === null) {
+                switch ($param['type']) {
+                case 'string':
+                    echo "    char *$name = NULL;\n";
+                    echo "    long long {$name}_len = 0;\n";
+                    break;
+                case 'int':
+                    echo "    long long $name = 0;\n";
+                    break;
+                case 'real':
+                    echo "    double $name = 0.0;\n";
+                    break;
+                case 'datetime':
+                    echo "    MYSQL_TIME $name;\n";
+                    // TODO init
+                    break;
+                }
+            } else {
+                $default = $param["default"];
+                switch ($param['type']) {
+                case 'string':
+                    echo "    char *$name = \"$default\";\n";
+                    echo "    long long {$name}_len = ".strlen($default).";\n";
+                    break;
+                case 'int':
+                    echo "    long long $name = $default;\n";
+                    break;
+                case 'real':
+                    echo "    double $name = $default;\n";
+                    break;
+                case 'datetime':
+                    echo "    MYSQL_TIME $name;\n";
+                    // TODO default
+                    break;
+                }
             }
+
+            echo "    int {$name}_is_null = 1;\n";
         }
         echo "\n";
 
@@ -635,6 +655,7 @@ class CodeGen_MySQL_UDF_Element_Function
             case 'string':
                 echo "$ind    $name = (char *)args->args[$n];\n";
                 echo "$ind    {$name}_len = args->lengths[$n];\n";
+                echo "$ind    {$name}_is_null = 0;\n";
                 break;
 
             case 'int':
