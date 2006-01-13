@@ -348,10 +348,10 @@ static int parse_mode(const char *mode)
   <function name="regexp_instr" returns="int" null="yes">
     <param name="text"       type="string"/>
     <param name="pattern"    type="string"/>
-    <param name="position"   type="int"    optional="yes"/>
-    <param name="occurrence" type="int"    optional="yes"/>
-    <param name="return_opt" type="int"    optional="yes"/>
-    <param name="mode"       type="string" optional="yes"/>
+    <param name="position"   type="int"    optional="yes" default="1"/>
+    <param name="occurrence" type="int"    optional="yes" default="1"/>
+    <param name="return_opt" type="int"    optional="yes" default="0"/>
+    <param name="mode"       type="string" optional="yes" default="c"/>
     
 
     <data>
