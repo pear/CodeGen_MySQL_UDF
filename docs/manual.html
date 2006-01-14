@@ -116,70 +116,75 @@ HREF="#AEN95"
 ></DT
 ><DT
 >2.3.2. <A
-HREF="#AEN112"
+HREF="#AEN111"
 >Parameters</A
 ></DT
 ><DT
 >2.3.3. <A
-HREF="#AEN136"
+HREF="#AEN138"
 >Private data</A
 ></DT
 ><DT
 >2.3.4. <A
-HREF="#AEN150"
+HREF="#AEN152"
 >Execution of regular functions</A
 ></DT
 ><DT
 >2.3.5. <A
-HREF="#AEN167"
+HREF="#AEN192"
 >Execution of aggregate functions</A
 ></DT
 ></DL
 ></DD
 ><DT
 >2.4. <A
-HREF="#AEN178"
+HREF="#AEN203"
 >Custom code</A
 ></DT
 ><DT
 >2.5. <A
-HREF="#AEN189"
->config.m4 fragments</A
+HREF="#AEN214"
+>Dependencies</A
 ></DT
 ><DT
 >2.6. <A
-HREF="#AEN196"
+HREF="#AEN229"
+>config.m4 fragments</A
+></DT
+><DT
+>2.7. <A
+HREF="#AEN236"
 >Makefile fragments</A
 ></DT
 ></DL
 ></DD
 ><DT
 >3. <A
-HREF="#AEN203"
+HREF="#AEN243"
 >XML input parsing</A
 ></DT
 ><DD
 ><DL
 ><DT
 >3.1. <A
-HREF="#AEN205"
+HREF="#AEN245"
 >Includes</A
 ></DT
 ><DD
 ><DL
 ><DT
 >3.1.1. <A
-HREF="#AEN218"
+HREF="#AEN258"
 >External entities</A
 ></DT
 ><DT
 >3.1.2. <A
-HREF="#AEN224"
+HREF="#AEN264"
 >XInclude</A
 ></DT
 ><DT
 >3.1.3. <A
-HREF="#AEN242"
+HREF="#AEN282"
 ><TT
 CLASS="literal"
 >&#60;code&#62;</TT
@@ -189,41 +194,41 @@ CLASS="literal"
 ></DD
 ><DT
 >3.2. <A
-HREF="#AEN252"
+HREF="#AEN292"
 >Verbatim text data</A
 ></DT
 ></DL
 ></DD
 ><DT
 >4. <A
-HREF="#AEN269"
+HREF="#AEN309"
 >Usage</A
 ></DT
 ><DD
 ><DL
 ><DT
 >4.1. <A
-HREF="#AEN271"
+HREF="#AEN311"
 >Invocation</A
 ></DT
 ><DT
 >4.2. <A
-HREF="#AEN281"
+HREF="#AEN321"
 >Configuration</A
 ></DT
 ><DT
 >4.3. <A
-HREF="#AEN302"
+HREF="#AEN342"
 >Compilation</A
 ></DT
 ><DT
 >4.4. <A
-HREF="#AEN307"
+HREF="#AEN347"
 >Testing</A
 ></DT
 ><DT
 >4.5. <A
-HREF="#AEN311"
+HREF="#AEN351"
 >Installation</A
 ></DT
 ></DL
@@ -255,42 +260,42 @@ HREF="#AEN82"
 ></DT
 ><DT
 >2-4. <A
-HREF="#AEN147"
+HREF="#AEN149"
 >Accessing private data</A
 ></DT
 ><DT
 >2-5. <A
-HREF="#AEN175"
+HREF="#AEN200"
 >A simple aggregate function</A
 ></DT
 ><DT
 >2-6. <A
-HREF="#AEN193"
+HREF="#AEN233"
 >config.m4 additions</A
 ></DT
 ><DT
 >2-7. <A
-HREF="#AEN200"
+HREF="#AEN240"
 >Makefile fragments</A
 ></DT
 ><DT
 >3-1. <A
-HREF="#AEN221"
+HREF="#AEN261"
 >System Entities</A
 ></DT
 ><DT
 >3-2. <A
-HREF="#AEN230"
+HREF="#AEN270"
 >XInclude</A
 ></DT
 ><DT
 >3-3. <A
-HREF="#AEN236"
+HREF="#AEN276"
 >Verbatim XInclude</A
 ></DT
 ><DT
 >3-4. <A
-HREF="#AEN248"
+HREF="#AEN288"
 >Using <TT
 CLASS="literal"
 >&#60;code src="..."&#62;</TT
@@ -298,12 +303,12 @@ CLASS="literal"
 ></DT
 ><DT
 >3-5. <A
-HREF="#AEN258"
+HREF="#AEN298"
 >CDATA sections</A
 ></DT
 ><DT
 >3-6. <A
-HREF="#AEN265"
+HREF="#AEN305"
 ><TT
 CLASS="literal"
 >&#60;?data</TT
@@ -788,12 +793,9 @@ CLASS="literal"
 CLASS="literal"
 >int</TT
 >,
-     <TT
+     and <TT
 CLASS="literal"
 >real</TT
-> and <TT
-CLASS="literal"
->datetime</TT
 >. For a function 
      that may return <TT
 CLASS="literal"
@@ -835,7 +837,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN112"
+NAME="AEN111"
 >2.3.2. Parameters</A
 ></H3
 ><P
@@ -854,18 +856,30 @@ CLASS="literal"
 >, <TT
 CLASS="literal"
 >int</TT
->, <TT
+> or <TT
 CLASS="literal"
 >real</TT
 >
-     or <TT
-CLASS="literal"
->datetime</TT
-> and is defined using the <TT
+     and is defined using the <TT
 CLASS="literal"
 >type=...</TT
+> attribute.
+    </P
+><P
+>&#13;     Optional paramters may be specified using the <TT
+CLASS="literal"
+>optional='yes'</TT
 >
-     attribute.
+     attribute. Once a parameter has been declared optional all following parameters 
+     have to be optional, too. Default values for optional values can be given using
+     the <TT
+CLASS="literal"
+>default=...</TT
+> attribute. If no default value is given an
+     unset optional parameter defaults to <TT
+CLASS="literal"
+>NULL</TT
+>.
     </P
 ><P
 >&#13;	 For each parameter set of C variables starting with the same name is
@@ -881,10 +895,7 @@ CLASS="literal"
 CLASS="literal"
 >string</TT
 >
-     and <TT
-CLASS="literal"
->datetime</TT
-> parameters, for <TT
+     parameters, for <TT
 CLASS="literal"
 >int</TT
 >
@@ -918,7 +929,12 @@ CLASS="emphasis"
 CLASS="literal"
 >_is_null</TT
 >
-     is created
+     is created and set to 0 or 1 accordingly. For <TT
+CLASS="literal"
+>string</TT
+>
+     parameters no such variable is needed, here the parameter variable is set
+     to NULL instead.
     </P
 ></DIV
 ><DIV
@@ -926,7 +942,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN136"
+NAME="AEN138"
 >2.3.3. Private data</A
 ></H3
 ><P
@@ -968,7 +984,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN147"
+NAME="AEN149"
 ></A
 ><P
 ><B
@@ -1000,7 +1016,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN150"
+NAME="AEN152"
 >2.3.4. Execution of regular functions</A
 ></H3
 ><P
@@ -1058,7 +1074,69 @@ CLASS="literal"
      a result value.
     </P
 ><P
->&#13;... RETURN macros ...     
+>&#13;     The following macros may be used to return results from the <TT
+CLASS="literal"
+>&#60;code&#62;</TT
+> 
+     section:
+     <P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="literal"
+>RETURN_STRING(str)</TT
+> returns a string, the string length is calculated using <CODE
+CLASS="function"
+>strlen()</CODE
+></P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>RETURN_STRINGL(str, len)</TT
+> returns a string of a given length, this saves a call to <CODE
+CLASS="function"
+>strlen()</CODE
+> if the string length is already known and allows to return binary strings that contaion the <TT
+CLASS="literal"
+>\0</TT
+> character</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>RETURN_INT(val)</TT
+> returns an <TT
+CLASS="literal"
+>int</TT
+> value</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>RETURN_REAL(val)</TT
+> returns a <TT
+CLASS="literal"
+>real</TT
+> value</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>RETURN_NULL()</TT
+> returns a <TT
+CLASS="literal"
+>NULL</TT
+> result</P
+></LI
+></UL
+>
     </P
 ></DIV
 ><DIV
@@ -1066,7 +1144,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN167"
+NAME="AEN192"
 >2.3.5. Execution of aggregate functions</A
 ></H3
 ><P
@@ -1097,7 +1175,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN175"
+NAME="AEN200"
 ></A
 ><P
 ><B
@@ -1131,7 +1209,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN178"
+NAME="AEN203"
 >2.4. Custom code</A
 ></H2
 ><P
@@ -1174,8 +1252,65 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN189"
->2.5. config.m4 fragments</A
+NAME="AEN214"
+>2.5. Dependencies</A
+></H2
+><P
+>&#13;    Libraries, header files and additonal files that an UDF relies on may be
+    defined in the <TT
+CLASS="literal"
+>&#60;deps&#62;</TT
+> section. So far only the
+    addition of files using the <TT
+CLASS="literal"
+>&#60;file&#62;</TT
+> tag works,
+    depending on the file type it is either compiled into the UDF or just
+    copied to the UDF directory. Currently C (<TT
+CLASS="literal"
+>.c</TT
+>, C++ 
+    (<TT
+CLASS="literal"
+>.c++</TT
+>, <TT
+CLASS="literal"
+>.cpp</TT
+>, <TT
+CLASS="literal"
+>.cxx</TT
+>),
+    , lex/flexx (<TT
+CLASS="literal"
+>.l</TT
+>, <TT
+CLASS="literal"
+>.lex</TT
+>, <TT
+CLASS="literal"
+>.flex</TT
+>)
+    and yacc/bison (<TT
+CLASS="literal"
+>.y</TT
+>, <TT
+CLASS="literal"
+>.yacc</TT
+>, <TT
+CLASS="literal"
+>.bison</TT
+>)
+    source files can be added to be compiled in, files with other extensions
+    are just copied.
+   </P
+></DIV
+><DIV
+CLASS="section"
+><HR><H2
+CLASS="section"
+><A
+NAME="AEN229"
+>2.6. config.m4 fragments</A
 ></H2
 ><P
 >&#13;    Additional configure checks can be added to the generated config.m4
@@ -1190,7 +1325,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN193"
+NAME="AEN233"
 ></A
 ><P
 ><B
@@ -1212,8 +1347,8 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN196"
->2.6. Makefile fragments</A
+NAME="AEN236"
+>2.7. Makefile fragments</A
 ></H2
 ><P
 >&#13;    Makefile rules may be added using the
@@ -1227,7 +1362,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN200"
+NAME="AEN240"
 ></A
 ><P
 ><B
@@ -1249,7 +1384,7 @@ $(builddir)/scanner.c: $(srcdir)/scanner.re
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="AEN203"
+NAME="AEN243"
 ></A
 >Chapter 3. XML input parsing</H1
 ><DIV
@@ -1257,7 +1392,7 @@ CLASS="section"
 ><H2
 CLASS="section"
 ><A
-NAME="AEN205"
+NAME="AEN245"
 >3.1. Includes</A
 ></H2
 ><P
@@ -1295,7 +1430,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN218"
+NAME="AEN258"
 >3.1.1. External entities</A
 ></H3
 ><P
@@ -1308,7 +1443,7 @@ NAME="AEN218"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN221"
+NAME="AEN261"
 ></A
 ><P
 ><B
@@ -1335,7 +1470,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN224"
+NAME="AEN264"
 >3.1.2. XInclude</A
 ></H3
 ><P
@@ -1356,7 +1491,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN230"
+NAME="AEN270"
 ></A
 ><P
 ><B
@@ -1387,7 +1522,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN236"
+NAME="AEN276"
 ></A
 ><P
 ><B
@@ -1420,7 +1555,7 @@ CLASS="section"
 ><HR><H3
 CLASS="section"
 ><A
-NAME="AEN242"
+NAME="AEN282"
 >3.1.3. <TT
 CLASS="literal"
 >&#60;code&#62;</TT
@@ -1439,7 +1574,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN248"
+NAME="AEN288"
 ></A
 ><P
 ><B
@@ -1465,7 +1600,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN252"
+NAME="AEN292"
 >3.2. Verbatim text data</A
 ></H2
 ><P
@@ -1487,7 +1622,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN258"
+NAME="AEN298"
 ></A
 ><P
 ><B
@@ -1520,7 +1655,7 @@ CLASS="literal"
 ><DIV
 CLASS="example"
 ><A
-NAME="AEN265"
+NAME="AEN305"
 ></A
 ><P
 ><B
@@ -1544,7 +1679,7 @@ CLASS="programlisting"
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="AEN269"
+NAME="AEN309"
 ></A
 >Chapter 4. Usage</H1
 ><DIV
@@ -1552,7 +1687,7 @@ CLASS="section"
 ><H2
 CLASS="section"
 ><A
-NAME="AEN271"
+NAME="AEN311"
 >4.1. Invocation</A
 ></H2
 ><P
@@ -1593,7 +1728,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN281"
+NAME="AEN321"
 >4.2. Configuration</A
 ></H2
 ><P
@@ -1676,7 +1811,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN302"
+NAME="AEN342"
 >4.3. Compilation</A
 ></H2
 ><P
@@ -1697,7 +1832,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN307"
+NAME="AEN347"
 >4.4. Testing</A
 ></H2
 ><P
@@ -1720,7 +1855,7 @@ CLASS="section"
 ><HR><H2
 CLASS="section"
 ><A
-NAME="AEN311"
+NAME="AEN351"
 >4.5. Installation</A
 ></H2
 ><P

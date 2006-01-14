@@ -268,9 +268,11 @@ Usage:
      and is defined using the <literal>type=...</literal> attribute.
     </para>
     <para>
-     Optional paramters may be specified using the <literal>optional='yes'<literal>
+     Optional paramters may be specified using the <literal>optional='yes'</literal>
      attribute. Once a parameter has been declared optional all following parameters 
-     have to be optional, too.
+     have to be optional, too. Default values for optional values can be given using
+     the <literal>default=...</literal> attribute. If no default value is given an
+     unset optional parameter defaults to <literal>NULL</literal>.
     </para>
     <para>
 	 For each parameter set of C variables starting with the same name is

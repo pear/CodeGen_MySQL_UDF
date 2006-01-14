@@ -369,7 +369,7 @@ class CodeGen_MySQL_UDF_Element_Function
             if ($this->optionalParams) {
                 return PEAR::raiseError("only optional parameters are allowed after the first optonal");
             }
-            if ($this->default !== null) {
+            if ($default !== null) {
                 return PEAR::raiseError("only optional parameters may have default values");
             }
             $this->mandatoryParams++;
@@ -617,6 +617,7 @@ class CodeGen_MySQL_UDF_Element_Function
                     // TODO init
                     break;
                 }
+                echo "    int {$name}_is_null = 1;\n";
             } else {
                 $default = $param["default"];
                 switch ($param['type']) {
@@ -635,9 +636,9 @@ class CodeGen_MySQL_UDF_Element_Function
                     // TODO default
                     break;
                 }
+                echo "    int {$name}_is_null = 0;\n";
             }
 
-            echo "    int {$name}_is_null = 1;\n";
         }
         echo "\n";
 
@@ -651,28 +652,24 @@ class CodeGen_MySQL_UDF_Element_Function
                 $ind = "";
             }
 
+            echo "$ind    {$name}_is_null = (args->args[$n]==NULL);\n";
+
             switch ($param['type']) {
             case 'string':
                 echo "$ind    $name = (char *)args->args[$n];\n";
-                echo "$ind    {$name}_len = args->lengths[$n];\n";
-                echo "$ind    {$name}_is_null = 0;\n";
+                echo "$ind    {$name}_len = (args->args[$n] == NULL) ? 0 : args->lengths[$n];\n";
                 break;
 
             case 'int':
-                echo "$ind    if (args->args[$n] != NULL) {\n";
-                echo "$ind        $name = *((long long *)args->args[$n]);\n";
-                echo "$ind        {$name}_is_null = 0;\n";
-                echo "$ind    }\n";
+                echo "$ind    $name = (args->args[$n] == NULL) ? 0 : *((long long *)args->args[$n]);\n";
                 break;
 
             case 'real':
-                echo "$ind    if (args->args[$n] != NULL) {\n";
-                echo "$ind        $name = *((double *)args->args[$n]);\n";
-                echo "$ind        {$name}_is_null = 0;\n";
-                echo "$ind    }\n";
+                echo "$ind    $name = (args->args[$n] == NULL) ? 0.0 : *((double *)args->args[$n]);\n";
                 break;
 
             case 'datetime':
+                // TODO rework
                 echo "$ind    if (args->args[$n] != NULL) {\n";
                 echo "$ind        int was_cut;\n";
                 echo "$ind        switch (str_to_datetime((const char *)args->args[{$n}], args->lengths[{$n}], &{$name}, TIME_FUZZY_DATE, &was_cut)) {\n";

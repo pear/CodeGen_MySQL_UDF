@@ -257,7 +257,7 @@ static int parse_mode(const char *mode)
         RETURN_NULL;
     }
 
-    RETURN_LONGLONG(stat == REG_NOMATCH ? 0 : 1);
+    RETURN_INT(stat == REG_NOMATCH ? 0 : 1);
 
 ?>
     </code>
@@ -430,7 +430,7 @@ static int parse_mode(const char *mode)
         RETURN_NULL;
     }
 
-    RETURN_LONGLONG(match.rm_so + return_opt ? 2 : 1);
+    RETURN_INT(match.rm_so + return_opt ? 2 : 1);
 ?>
     </code>
   </function>
