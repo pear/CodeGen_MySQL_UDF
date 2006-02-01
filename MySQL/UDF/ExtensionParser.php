@@ -242,14 +242,6 @@ class CodeGen_MySQL_UDF_ExtensionParser
         $this->extension->headers[$attr['name']] = $attr; 
     }
 
-    function tagend_extension_code($attr, $data) {
-        if(!isset($attr['role'])) {
-            return PEAR::raiseError("role attribut for code missing");
-        }
-        $err = $this->extension->addCode($attr["role"], CodeGen_Tools_Indent::linetrim($data));
-        return $err;
-    }
-
     function tagend_udf_code($attr, $data) {
         return $this->tagend_extension_code($attr, $data);
     }

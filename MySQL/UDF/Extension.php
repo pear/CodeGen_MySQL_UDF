@@ -11,7 +11,7 @@
  * send a note to license@php.net so we can mail you a copy immediately.
  *
  * @category   Tools and Utilities
- * @package    CodeGen
+ * @package    CodeGen_MySQL_UDF
  * @author     Hartmut Holzgraefe <hartmut@php.net>
  * @copyright  2005 Hartmut Holzgraefe
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
@@ -42,7 +42,7 @@ require_once "CodeGen/Tools/Indent.php";
 // }}} 
 
 /**
- * A class that generates PECL extension soure and documenation files
+ * A class that generates UDF extension soure and documenation files
  *
  * @category   Tools and Utilities
  * @package    CodeGen_UDF_MySQL
@@ -84,20 +84,6 @@ class CodeGen_MySQL_UDF_Extension
      */
     protected  $functions = array();
     
-    /**
-     * The package files created by this extension
-     *
-     * @var array
-     */
-    protected $packageFiles = array();
-
-    /**
-     * Code snippets
-     *
-     * @var array
-     */
-    protected $code = array();
-
 
     // }}} 
 
@@ -110,25 +96,11 @@ class CodeGen_MySQL_UDF_Extension
      */
     function __construct() 
     {
-        $this->libs      = array();
-        $this->headers   = array();
-        
-        $this->platform = new CodeGen_Tools_Platform("all");
+        parent::__construct();
     }
     
     // }}} 
     
-    /**
-     * Add global code to the extension
-     *
-     * @param  object   C code snippet
-     */
-    function addCode($type, $code)
-    {
-        $this->code[$type][] = $code;
-    }
-
-
     // {{{ member adding functions
     
     /**
@@ -147,20 +119,6 @@ class CodeGen_MySQL_UDF_Extension
         return true;
     }
 
-
-    /**
-     * Add a package file by type and name
-     *
-     * @param  string  type
-     * @param  string  name
-     */
-    function addPackageFile($type, $name)
-    {
-        $this->packageFiles[$type][$name] = $name;
-
-        return true;
-    }
-    
 
     /**
      * Add a source file to be copied to the extension dir
@@ -249,38 +207,38 @@ class CodeGen_MySQL_UDF_Extension
         }
         
         // make path absolute to be independant of working directory changes
-        $dirpath = realpath($dirpath);
+        $this->dirpath = realpath($dirpath);
         
         echo "Creating '{$this->name}' extension in '$dirpath'\n";
         
         // generate complete source code
-        $this->generateSource($dirpath);
+        $this->generateSource();
         
         // generate README file
-        $this->writeReadme($dirpath);
+        $this->writeReadme();
 
         // generate INSTALL file
-        $this->writeInstall($dirpath);
+        $this->writeInstall();
 
         // generate NEWS file
-        $this->writeNews($dirpath);
+        $this->writeNews();
         
         // generate ChangeLog file
-        $this->writeChangelog($dirpath);
+        $this->writeChangelog();
 
         // generate AUTHORS file
-        $this->writeAuthors($dirpath);
+        $this->writeAuthors();
 
-        // copy additional files
+        // copy additional source files
         if (isset($this->packageFiles['copy'])) {
-            foreach ($this->packageFiles['copy'] as $file) {
-                copy($file, $dirpath."/".basename($file));
+            foreach ($this->packageFiles['copy'] as $basename => $filepath) {
+                copy($filepath, $this->dirpath."/".$basename);
             }
         }
 
         // let autoconf and automake take care of the rest
         $olddir = getcwd();
-        chdir($dirpath);
+        chdir($this->dirpath);
 
         $return = 0;
         
@@ -314,28 +272,28 @@ class CodeGen_MySQL_UDF_Extension
     /**
      * Create the extensions code soure and project files
      *
-     * @param  string Directory to write to
+     * @access  protected
      */
-    function generateSource($dirpath) 
+    function generateSource() 
     {
         // generate source and header files
-        $this->writeHeaderFile($dirpath);
-        $this->writeCodeFile($dirpath);
+        $this->writeHeaderFile();
+        $this->writeCodeFile();
 
         // generate .cvsignore file entries
-        $this->writeDotCvsignore($dirpath);
+        $this->writeDotCvsignore();
 
         // generate EXPERIMENTAL file for unstable release states
-        $this->writeExperimental($dirpath);
+        $this->writeExperimental();
         
         // generate LICENSE file if license given
         if ($this->license) {
-            $this->license->writeToFile("$dirpath/COPYING");
+            $this->license->writeToFile($this->dirpath."/COPYING");
             $this->files['doc'][] = "COPYING";
         }
 
         // generate autoconf/automake files
-        $this->writeConfig($dirpath);
+        $this->writeConfig();
     }
     
     // {{{   docbook documentation
@@ -379,15 +337,17 @@ class CodeGen_MySQL_UDF_Extension
     /**
      * Write the complete C header file
      *
-     * @param  string  directory to write to
+     * @access protected
      */
-    function writeHeaderFile($dirpath) 
+    function writeHeaderFile() 
     {
         $filename = "udf_{$this->name}.h";
         
-        $upname = strtoupper($this->name);
+        $this->addPackageFile('header', $filename); 
+
+        $file =  new CodeGen_Tools_Outbuf($this->dirpath."/".$filename);
         
-        ob_start();
+        $upname = strtoupper($this->name);
         
         echo $this->getLicense();
         echo "#ifndef UDF_{$upname}_H\n";
@@ -435,13 +395,9 @@ class CodeGen_MySQL_UDF_Extension
 
 
 <?php
-        echo "#endif /* PHP_{$upname}_H */\n\n";
+        echo "#endif /* UDF_{$upname}_H */\n\n";
 
-        $this->addPackageFile("h", $filename); 
-        $fp = fopen("$dirpath/$filename", "w");
-        fputs($fp, CodeGen_Tools_Indent::tabify(ob_get_contents()));
-        ob_end_clean();
-        fclose($fp);
+        return $file->write();
     }
 
     // }}} 
@@ -453,14 +409,16 @@ class CodeGen_MySQL_UDF_Extension
     /**
      * Write the complete C code file
      *
-     * @param  string  directory to write to
+     * @access protected
      */
-    function writeCodeFile($dirpath) {
+    function writeCodeFile() {
         $filename = "{$this->name}.".$this->language;  
 
-        $upname = strtoupper($this->name);
+        $this->addPackageFile('c', $filename); 
 
-        ob_start();
+        $file =  new CodeGen_Tools_Outbuf($this->dirpath."/".$filename);
+        
+        $upname = strtoupper($this->name);
 
         echo $this->getLicense();
 
@@ -507,9 +465,9 @@ typedef long long longlong;
 
         echo "#include \"udf_{$this->name}.h\"\n\n";
 
-        if (isset($this->code['header'])) {
+        if (isset($this->code['header']['top'])) {
             echo "// {{{ user defined header code\n\n";
-            foreach ($this->code['header'] as $code) {
+            foreach ($this->code['header']['top'] as $code) {
                 echo CodeGen_Tools_Indent::indent(4, $code);
             }
             echo "// }}} \n\n";
@@ -542,17 +500,21 @@ typedef long long longlong;
         }        
         echo "// }}}\n\n";
 
+        if (isset($this->code['header']['bottom'])) {
+            echo "// {{{ user defined header code\n\n";
+            foreach ($this->code['header']['bottom'] as $code) {
+                echo CodeGen_Tools_Indent::indent(4, $code);
+            }
+            echo "// }}} \n\n";
+        }
+
         echo "#else\n";
         echo "#error your installation does not support loading UDFs\n";
         echo "#endif /* HAVE_DLOPEN */\n";
 
         echo CodeGen_Element::cCodeEditorSettings();
- 
-        $this->addPackageFile("c", $filename); 
-        $fp = fopen("$dirpath/$filename", "w");
-        fputs($fp, CodeGen_Tools_Indent::tabify(ob_get_contents()));
-        ob_end_clean();
-        fclose($fp);
+
+        return $file->write();
     }
 
     // }}} 
@@ -561,139 +523,120 @@ typedef long long longlong;
     /**
      * Write authors to the AUTHORS file
      *
-     * @param  string  directory to write to
+     * @access protected
      */
-    function writeAuthors($dirpath) 
+    function writeAuthors() 
     {
-        $fp = fopen("$dirpath/AUTHORS", "w");
+        $file =  new CodeGen_Tools_Outbuf($this->dirpath."/AUTHORS");
         if (count($this->authors)) {
             $this->addPackageFile("doc", "AUTHORS");
-            fputs($fp, "{$this->name}\n");
+            echo "{$this->name}\n";
             $names = array();
             foreach($this->authors as $author) {
                 $names[] = $author->getName();
             }
-            fputs($fp, join(", ", $names) . "\n"); 
+            echo join(", ", $names) . "\n" 
         }
-        fclose($fp);
+        
+        return $file->write();
     }
 
 
     /**
     * Write EXPERIMENTAL file for non-stable extensions
     *
-    * @param  string  directory to write to
+    * @access protected
     */
-    function writeExperimental($dirpath) 
+    function writeExperimental() 
     {
         if (($this->release) && isset($this->release->state) && $this->release->state !== 'stable') {
             $this->addPackageFile("doc", "EXPERIMENTAL");
-            $fp = fopen("$dirpath/EXPERIMENTAL", "w");
-            fputs($fp,
-"this extension is experimental,
+
+
+            $file =  new CodeGen_Tools_Outbuf($this->dirpath."/EXPERIMENTAL");
+?>
+this extension is experimental,
 its functions may change their names 
 or move to extension all together 
 so do not rely to much on them 
 you have been warned!
-");
-            fclose($fp);
+<?php
+
+            return $file->write();
         }
     }
 
     /**
     * Write .cvsignore entries
     *
-    * @param  string  directory to write to
+    * @access protected
     */
-    function writeDotCvsignore($dirpath)
+    function writeDotCvsignore()
     {
         // open output file
-        $fp = fopen("$dirpath/.cvsignore", "w");
+        $file =  new CodeGen_Tools_Outbuf($this->dirpath."/.cvsignore", "w");
 
         // unix specific entries
         if ($this->platform->test("unix")) {
-            fputs($fp, "*.lo\n");
-            fputs($fp, "*.la\n");
-            fputs($fp, ".deps\n");
+            echo "*.lo\n";
+            echo "*.la\n";
+            echo ".deps\n";
         }
 
         // windows specific entries
         if ($this->platform->test("windows")) {
-            fputs($fp, "*.plg\n");
-            fputs($fp, "*.opt\n");
-            fputs($fp, "*.ncb\n");
-            fputs($fp, "Release\n");
-            fputs($fp, "Release_inline\n");
-            fputs($fp, "Debug\n");
-            fputs($fp, "Release_TS\n");
-            fputs($fp, "Release_TSDbg\n");
-            fputs($fp, "Release_TS_inline\n");
-            fputs($fp, "Debug_TS\n");
+            echo "*.plg\n";
+            echo "*.opt\n";
+            echo "*.ncb\n";
+            echo "Release\n";
+            echo "Release_inline\n";
+            echo "Debug\n";
+            echo "Release_TS\n";
+            echo "Release_TSDbg\n";
+            echo "Release_TS_inline\n";
+            echo "Debug_TS\n";
         }
 
-        fclose($fp);
+        return $file->write();
     }
 
-    /**
-    * Describe next steps after successfull extension creation
-    *
-    * @param  string  directory where extension was build
-    */
-    function successMsg($dirpath =false)
-    {
-
-        if ($dirpath === false) {
-            $dirpath = $this->name;
-        }
-
-        $msg = "\nYour extension has been created in directory $dirpath.\n";
-        $msg.= "See $dirpath/README and $dirpath/INSTALL for further instructions.\n";
-
-        return $msg;
-    }
 
 
     /** 
     * Generate README file (custom or default)
     *
-    * @param  string  directory to write to
+    * @param  protected
     */
-    function writeReadme($dirpath) 
+    function writeReadme() 
     {
-        ob_start();
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/README");
+
 ?>
 This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo self::version(); ?>
 
 ...
 <?php
 
-
-        $fp = fopen("$dirpath/README", "w");
-        fputs($fp, ob_get_contents());
-        ob_end_clean();
-        fclose($fp);
+      return $file->write();
     }
 
 
     /** 
     * Generate INSTALL file (custom or default)
     *
-    * @param  string  directory to write to
+    * @access protected
     */
-    function writeInstall($dirpath) 
+    function writeInstall() 
     {
-        ob_start();
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/INSTALL");
+
 ?>
 This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo self::version(); ?>
 
 ...
 <?php
 
-
-        $fp = fopen("$dirpath/INSTALL", "w");
-        fputs($fp, ob_get_contents());
-        ob_end_clean();
-        fclose($fp);
+        $file->write();
     }
 
 
@@ -701,55 +644,48 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo se
     /** 
     * Generate NEWS file (custom or default)
     *
-    * @param  string  directory to write to
+    * @access protected
     */
-    function writeNews($dirpath) 
+    function writeNews() 
     {
-        ob_start();
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/NEWS");
+
 ?>
 This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo self::version(); ?>
 
 ...
 <?php
 
-
-        $fp = fopen("$dirpath/NEWS", "w");
-        fputs($fp, ob_get_contents());
-        ob_end_clean();
-        fclose($fp);
+        $file->write();
     }
 
 
     /** 
     * Generate ChangeLog file (custom or default)
     *
-    * @param  string  directory to write to
+    * @access protected
     */
-    function writeChangelog($dirpath) 
+    function writeChangelog() 
     {
-        ob_start();
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/ChangeLog");
 ?>
 This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo self::version(); ?>
 
 ...
 <?php
 
-
-        $fp = fopen("$dirpath/ChangeLog", "w");
-        fputs($fp, ob_get_contents());
-        ob_end_clean();
-        fclose($fp);
+        $file->write();
     }
 
 
     /**
      * Generate configure files for this UDF extension
      *
-     * @param  string directory to write to
+     * @access protected
      */
-    function writeConfig($dirpath) {
+    function writeConfig() {
         // Makefile.am
-        ob_start();
+        $makefile = new CodeGen_Tools_Outbuf($this->dirpath."/Makefile.am");
 
         echo "lib_LTLIBRARIES = {$this->name}.la\n";
         echo "{$this->name}_la_CFLAGS = @MYSQL_CFLAGS@\n";
@@ -763,15 +699,12 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo se
         }
         echo "\n";
 
-        $fp = fopen("$dirpath/Makefile.am", "w");
-        fputs( $fp, ob_get_contents());
-        fclose($fp);
-        ob_end_clean();
+        $makefile->write();
     
 
 
         // configure.in
-        ob_start();
+        $configure = new CodeGen_Tools_Outbuf($this->dirpath."/configure.in");
 
         echo "AC_INIT({$this->name}.".$this->language.")\n";
         echo "AM_INIT_AUTOMAKE({$this->name}.so, 1.0)\n";
@@ -861,10 +794,8 @@ AC_SUBST(MYSQL_CFLAGS, $mysql_cflags)
 
 AC_OUTPUT(Makefile)
 ';
-        $fp = fopen("$dirpath/configure.in", "w");
-        fputs( $fp, ob_get_contents());
-        fclose($fp);
-        ob_end_clean();
+
+        $configure->write();
     }
 }   
 
