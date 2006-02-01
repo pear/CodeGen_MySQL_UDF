@@ -13,7 +13,7 @@
     </maintainer>
   </maintainers>
   <description>
-   UDF_Gen is a code generator for MySQL User Defined Function (UDF)
+   CodeGen_MySQL_UDF is a code generator for MySQL User Defined Function (UDF)
    extensions similar to PECL_Gen for PHP. 
 
    It reads in configuration options, function prototypes and code fragments
