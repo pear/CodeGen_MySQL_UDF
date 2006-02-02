@@ -9,7 +9,7 @@
 
   <license>PHP</license>
 
-  <code role="header">
+  <code role="header" position="top">
 <![CDATA[
 
 #if MYSQL_VERSION_ID < 50000

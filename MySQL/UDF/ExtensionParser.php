@@ -23,7 +23,7 @@
 /**
  * includes
  */
-require_once "CodeGen/ExtensionParser.php";
+require_once "CodeGen/MySQL/ExtensionParser.php";
 require_once "CodeGen/Maintainer.php";
 require_once "CodeGen/Tools/Indent.php";
 
@@ -39,7 +39,7 @@ require_once "CodeGen/Tools/Indent.php";
  * @link       http://pear.php.net/package/CodeGen_MySQL_UDF
  */
 class CodeGen_MySQL_UDF_ExtensionParser 
-    extends CodeGen_ExtensionParser
+    extends CodeGen_MySQL_ExtensionParser
 {
     function tagstart_udf($attr) 
     {
@@ -200,47 +200,6 @@ class CodeGen_MySQL_UDF_ExtensionParser
     }
 
         
-
-    function tagstart_deps($attr)
-    {
-        if (isset($attr["platform"])) {
-            $err = $this->extension->setPlatform($attr["platform"]);
-            if (PEAR::isError($err)) {
-                return $err;
-            }
-        }
-    }
-
-    function tagstart_deps_file($attr) 
-    {
-        if (!isset($attr['name'])) {
-            return PEAR::raiseError("name attribut for file missing");
-        }
-
-        return $this->extension->addSourceFile($attr['name']);
-    }
-        
-    function tagstart_deps_lib($attr)
-    {
-        $this->extension->libs[$attr['name']] = $attr;
-        if (isset($attr['platform'])) {
-            $platform = new CodeGen_Tools_Platform($attr["platform"]);
-        } else {
-            $platform = new CodeGen_Tools_Platform("all");
-        }
-
-        if (PEAR::isError($platform)) {
-            return $platform;
-        }
-
-        $this->extension->libs[$attr['name']]['platform'] = $platform;
-        return true;
-    }
-
-    function tagstart_deps_header($attr)
-    {
-        $this->extension->headers[$attr['name']] = $attr; 
-    }
 
     function tagend_udf_code($attr, $data) {
         return $this->tagend_extension_code($attr, $data);
