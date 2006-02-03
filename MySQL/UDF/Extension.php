@@ -306,7 +306,7 @@ typedef long long longlong;
         echo "#error your installation does not support loading UDFs\n";
         echo "#endif /* HAVE_DLOPEN */\n";
 
-        echo CodeGen_Element::cCodeEditorSettings();
+        echo $this->cCodeEditorSettings();
 
         return $file->write();
     }
