@@ -82,46 +82,6 @@ class CodeGen_MySQL_UDF_Element_Function
 
 
 
-    /**
-     * A short description
-     *
-     * @var     string
-     */
-    protected $summary = "";
-
-    /**
-     * Summary setter
-     *
-     * @param  string  function summary
-     * @return bool    success status
-     */
-    function setSummary($text)
-    {
-        $this->summary = $text;
-        return true;
-    }
-
-
-
-
-    /**
-     * A long description
-     *
-     * @var     string
-     */
-    protected $description  = "";
-
-    /**
-     * Description setter
-     *
-     * @param  string  function description
-     * @return bool    success status
-     */
-    function setDescription($text)
-    {
-        $this->description = $text;
-        return true;
-    }
 
 
     /**
