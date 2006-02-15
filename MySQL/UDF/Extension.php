@@ -62,7 +62,7 @@ class CodeGen_MySQL_UDF_Extension
     */
     static function version() 
     {
-        return "0.9.1dev";
+        return "@package_version@";
     }
 
     /**

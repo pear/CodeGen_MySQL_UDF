@@ -58,7 +58,9 @@
       <dir name="/" baseinstalldir="CodeGen">
         <dir name="MySQL">
           <dir name="UDF">
-            <file role="php">Extension.php</file>
+            <file role="php" name="Extension.php">
+              <replace from="@package_version@" to="version" type="package-info" />
+            </file>
             <file role="php">ExtensionParser.php</file>
             <dir name="Element">  
               <file role="php">Function.php</file>
