@@ -92,4 +92,17 @@
 		</code>
 	</function>
 
+  <test name="foo">
+   <description>
+    foo
+    bar
+   </description>
+   <code>
+    SELECT ex_sqr(3);
+   </code>
+   <result>
+    9
+   </result>
+  </test>
+
 </udf>

@@ -958,6 +958,16 @@ class CodeGen_MySQL_UDF_Element_Function
     function dropStatement($extension) {
         return "DROP FUNCTION {$this->name};";
     }
+
+    /**
+     * Return SQL conditional DROP FUNCTION statement for this function
+     *
+     * @param  object  Extension to generate for
+     * @return string
+     */
+    function dropIfExistsStatement($extension) {
+        return "DROP FUNCTION IF EXISTS {$this->name};";
+    }
 }
 
 ?>

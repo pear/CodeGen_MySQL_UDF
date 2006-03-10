@@ -64,6 +64,7 @@
             <file role="php">ExtensionParser.php</file>
             <dir name="Element">  
               <file role="php">Function.php</file>
+              <file role="php">Test.php</file>
             </dir>
           </dir>
         </dir>

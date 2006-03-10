@@ -355,8 +355,34 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo se
         $file->write();
     }
 
+    
+    function writeTests()
+    {
+        parent::writeTests();
+
+        $extension->addPackageFile("test", "tests/create_functions.inc");
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/tests/create_functions.inc");		
+        foreach ($this->functions as $function) {
+            echo $function->dropIfExistsStatement($this);
+            echo $function->createStatement($this);
+        }
+        $file->write();
+
+        $extension->addPackageFile("test", "tests/drop_functions.inc");
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/tests/drop_functions.inc");		
+        foreach ($this->functions as $function) {
+            echo $function->dropStatement($this);
+        }
+        $file->write();
+
+    }
 
 
+    function testFactory()
+    {
+        error_log("MySQL UDF test factory");
+        return new CodeGen_MySQL_UDF_Element_Test(); 
+    }
 }   
 
 

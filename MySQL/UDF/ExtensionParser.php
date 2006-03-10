@@ -24,8 +24,7 @@
  * includes
  */
 require_once "CodeGen/MySQL/ExtensionParser.php";
-require_once "CodeGen/Maintainer.php";
-require_once "CodeGen/Tools/Indent.php";
+
 
 /**
  * A class that generates MySQL UDF soure and documenation files
