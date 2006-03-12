@@ -1,3 +1,5 @@
+- TEST system (done)
+
 - generate UDF documentation
 
 - add --udf-cflags switch to mysql_config 
@@ -25,6 +27,3 @@
 
 - debug configure option should be aware of -DDBUG_* in CFLAGS
 
-- TEST system
-  current approach: use PHP extension myudf and
-  input files similar to PHPs .phpt files ...
