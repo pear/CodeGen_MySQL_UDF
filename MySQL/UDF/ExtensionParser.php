@@ -188,6 +188,56 @@ class CodeGen_MySQL_UDF_ExtensionParser
     }
 
 
+    function tagstart_function_notest($attr)
+    {
+        return $this->noAttributes($attr);
+    }
+
+    function tagend_function_notest($attr, $data)
+    {
+        return $this->helper->setTestCode("");
+    }
+
+    function tagstart_function_test($attr)
+    {
+        return $this->noAttributes($attr);
+    }
+
+    function tagstart_function_test_description($attr)
+    {
+        return $this->noAttributes($attr);
+    }
+
+    function tagend_function_test_description($attr, $data)
+    {
+        return $this->helper->setTestDescription(CodeGen_Tools_Indent::linetrim($data));
+    }
+
+    function tagstart_function_test_code($attr)
+    {
+        return $this->noAttributes($attr);
+    }
+
+    function tagend_function_test_code($attr, $data)
+    {
+        return $this->helper->setTestCode(CodeGen_Tools_Indent::linetrim($data));
+    }
+
+    function tagstart_function_test_result($attr)
+    {
+        return $this->checkAttributes($attr, array("mode"));
+    }
+
+    function tagend_function_test_result($attr, $data)
+    {
+        return $this->helper->setTestResult(CodeGen_Tools_Indent::linetrim($data), @$attr['mode']);
+    } 
+
+    function tagend_function_test($attr)
+    {
+        return true;
+    }
+
     function tagend_function($attr, $data) 
     {
         //TODO check integrity here

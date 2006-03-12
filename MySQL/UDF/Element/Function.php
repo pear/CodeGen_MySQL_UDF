@@ -968,6 +968,136 @@ class CodeGen_MySQL_UDF_Element_Function
     function dropIfExistsStatement($extension) {
         return "DROP FUNCTION IF EXISTS {$this->name};";
     }
+
+
+	/**
+	 * test code snippet
+	 *
+	 * @var string
+	 */
+	protected $testCode = "";
+	
+	/**
+	 * testCode setter
+	 *
+	 * @param  string code snippet
+	 */
+	function setTestCode($code)
+	{
+	  $this->testCode = $code;
+	}
+	
+	/**
+	 * testCode getter
+	 *
+	 * @return string
+	 */
+	function getTestCode()
+	{
+	  return $this->testCode;
+	}
+	
+	
+	/**
+	 * expected test result string
+	 *
+	 * @var array
+	 */
+	protected $testResult = "";
+	
+	/**
+	 * testResult setter
+	 *
+	 * @param  string result text
+	 */
+	function setTestResult($text)
+	{
+	  $this->testResult = $text;
+	}
+	
+	/**
+	 * testResult getter
+	 *
+	 * @return string
+	 */
+	function getTestResult()
+	{
+	  return $this->testResult;
+	}
+	
+	
+	/**
+	 * test code description
+	 *
+	 * @var string
+	 */
+	protected $testDescription = "";
+	
+	/**
+	 * testDescritpion setter
+	 *
+	 * @param  string text
+	 */
+	function setTestDescription($text)
+	{
+	  $this->testDescription = $text;
+	}
+	
+	/**
+	 * testDescription getter
+	 *
+	 * @return string
+	 */
+	function getTestDescription()
+	{
+	  return $this->testDescription;
+	}
+	
+	
+	/**
+	 * write test case for this function
+	 *
+	 * @access public
+	 * @param  class Extension  extension the function is part of
+	 */
+	function writeTest(CodeGen_MySQL_UDF_Extension $extension) 
+	{
+	  $test = $this->createTest($extension);
+	  
+	  if ($test instanceof CodeGen_MySQL_Element_Test) {
+		$test->writeTest($extension);
+	  }
+	}
+	
+	/**
+	 * Create test case for this function
+	 *
+	 * @access public
+	 * @param  object  extension the function is part of
+	 * @return object  generated test case
+	 */
+	function createTest(CodeGen_MySQL_UDF_Extension $extension) 
+	{
+	  if (!$this->testCode) {
+		return false;
+	  }
+	  
+	  $test = new CodeGen_MySQL_UDF_Element_Test;
+            
+	  $test->setName($this->name);
+
+	  if ($this->testDescription) {
+		$test->setDescription($this->testDescription);
+	  }
+            
+	  $test->setCode($this->testCode);
+      
+	  if (!empty($this->testResult)) {
+		$test->setResult($this->testResult);
+	  }
+      
+	  return $test;
+	}
 }
 
 ?>

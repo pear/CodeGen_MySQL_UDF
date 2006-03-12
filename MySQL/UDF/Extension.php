@@ -30,6 +30,7 @@ require_once "System.php";
     
 require_once "CodeGen/Element.php";
 require_once "CodeGen/MySQL/UDF/Element/Function.php";
+require_once "CodeGen/MySQL/UDF/Element/Test.php";
 
 require_once "CodeGen/Maintainer.php";
 
@@ -360,27 +361,32 @@ This is a standalone UDF extension created using CodeGen_Mysql_UDF <?php echo se
     {
         parent::writeTests();
 
-        $extension->addPackageFile("test", "tests/create_functions.inc");
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/tests/create_functions.inc");		
+        $this->addPackageFile("test", "tests/create_functions.inc");
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/tests/create_functions.inc");		
+        echo "-- disable_warnings\n";
         foreach ($this->functions as $function) {
-            echo $function->dropIfExistsStatement($this);
-            echo $function->createStatement($this);
+            echo $function->dropIfExistsStatement($this)."\n";
+            echo $function->createStatement($this)."\n";
+        }
+        echo "-- enable_warnings\n";
+        $file->write();
+
+        $this->addPackageFile("test", "tests/drop_functions.inc");
+        $file = new CodeGen_Tools_Outbuf($this->dirpath."/tests/drop_functions.inc");		
+        foreach ($this->functions as $function) {
+            echo $function->dropStatement($this)."\n";
         }
         $file->write();
 
-        $extension->addPackageFile("test", "tests/drop_functions.inc");
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/tests/drop_functions.inc");		
+        // function related tests
         foreach ($this->functions as $function) {
-            echo $function->dropStatement($this);
+            $function->writeTest($this);
         }
-        $file->write();
 
     }
 
-
     function testFactory()
     {
-        error_log("MySQL UDF test factory");
         return new CodeGen_MySQL_UDF_Element_Test(); 
     }
 }   
