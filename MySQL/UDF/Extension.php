@@ -151,6 +151,15 @@ class CodeGen_MySQL_UDF_Extension
         echo $this->getLicense();
         echo "#ifndef UDF_{$upname}_H\n";
         echo "#define UDF_{$upname}_H\n\n";   
+
+        if (isset($this->code['header']['top'])) {
+            echo "// {{{ user defined header code\n\n";
+            foreach ($this->code['header']['top'] as $code) {
+                echo CodeGen_Tools_Indent::indent(4, $code);
+            }
+            echo "// }}} \n\n";
+        }
+
 ?>        
 
 #define RETURN_NULL          { *is_null = 1; DBUG_RETURN(0); }
@@ -194,6 +203,15 @@ class CodeGen_MySQL_UDF_Extension
 
 
 <?php
+        if (isset($this->code['header']['bottom'])) {
+            echo "// {{{ user defined header code\n\n";
+            foreach ($this->code['header']['bottom'] as $code) {
+                echo CodeGen_Tools_Indent::indent(4, $code);
+            }
+            echo "// }}} \n\n";
+        }
+
+
         echo "#endif /* UDF_{$upname}_H */\n\n";
 
         return $file->write();
@@ -264,9 +282,9 @@ typedef long long longlong;
 
         echo "#include \"udf_{$this->name}.h\"\n\n";
 
-        if (isset($this->code['header']['top'])) {
-            echo "// {{{ user defined header code\n\n";
-            foreach ($this->code['header']['top'] as $code) {
+        if (isset($this->code['code']['top'])) {
+            echo "// {{{ user defined code\n\n";
+            foreach ($this->code['code']['top'] as $code) {
                 echo CodeGen_Tools_Indent::indent(4, $code);
             }
             echo "// }}} \n\n";
@@ -299,9 +317,9 @@ typedef long long longlong;
         }        
         echo "// }}}\n\n";
 
-        if (isset($this->code['header']['bottom'])) {
-            echo "// {{{ user defined header code\n\n";
-            foreach ($this->code['header']['bottom'] as $code) {
+        if (isset($this->code['code']['bottom'])) {
+            echo "// {{{ user defined code\n\n";
+            foreach ($this->code['code']['bottom'] as $code) {
                 echo CodeGen_Tools_Indent::indent(4, $code);
             }
             echo "// }}} \n\n";
