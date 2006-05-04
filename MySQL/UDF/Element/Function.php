@@ -216,6 +216,8 @@ class CodeGen_MySQL_UDF_Element_Function
      */
     function setReturns($returns) 
     {
+        $returns = strtolower($returns);
+
         switch ($returns) {
         case "string":
             if (!$this->length) {
@@ -294,6 +296,7 @@ class CodeGen_MySQL_UDF_Element_Function
             return PEAR::raiseError("'$name' is a reserved word which is not valid for data element names");
         }
 
+        $type = strtolower($type);
         switch ($type) {
         case "int":
         case "real":
