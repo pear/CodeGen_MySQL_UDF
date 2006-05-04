@@ -227,8 +227,11 @@ class CodeGen_MySQL_UDF_Element_Function
             $this->addDataElement("_resultbuf_len", "unsigned long",   "0L");
             // fallthru
         case "int":
+            $this->returns = $returns;
+            return true;
         case "real":
             $this->returns = $returns;
+            $this->decimals = 14; 
             return true;
         case "datetime":
             $this->returns = "string";
