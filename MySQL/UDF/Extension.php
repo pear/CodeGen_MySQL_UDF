@@ -252,7 +252,9 @@ class CodeGen_MySQL_UDF_Extension
         }
         echo "*/\n// }}}\n\n";
         
-        
+        foreach ($this->headers as $header) {
+            echo $header->hCode(true);
+        }        
             
         echo 
 "// {{{ standard header stuff
@@ -278,6 +280,10 @@ typedef long long longlong;
 
 ";
 
+        foreach ($this->headers as $header) {
+            echo $header->hCode(false);
+        }
+        
         echo "#ifdef HAVE_DLOPEN\n\n";
 
         echo "#include \"udf_{$this->name}.h\"\n\n";

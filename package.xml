@@ -27,11 +27,11 @@
   <license>PHP</license>
 
   <release>
-    <state>alpha</state>
-    <version>0.9.2dev</version>
-    <date>2005-09-06</date>
+    <state>beta</state>
+    <version>0.9.5dev</version>
+    <date>2006-05-06</date>
     <notes>
-     initial package for proposal process
+     trying to stabelize for release
     </notes>
     <deps>
       <dep type="php" rel="ge" version="5.0"/>
@@ -52,6 +52,7 @@
             <file role="doc" name="ora_funcs.xml"/>
             <file role="doc" name="oracle_date.l"/>
             <file role="doc" name="rlimit.xml"/>
+            <file role="doc" name="gc_dist.xml"/>
           </dir>
         </dir>
       </dir>
