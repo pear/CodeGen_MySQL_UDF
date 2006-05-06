@@ -1,10 +1,10 @@
 - TEST system (done)
 
 - generate UDF documentation
+ - use same DocBook semantics as PHP?
 
 - add --udf-cflags switch to mysql_config 
-  take care that debug settings and CFLAGS from
-	environment are preserved
+  lets wait for whatever solution comes with the new PLUGIN stuff  
 
 - configure/make stuff 
   - required headers
@@ -24,6 +24,12 @@
 - support for other pseudo-types: "mixed", "enum"(?), ...
 
 - test for HAVE_DLOPEN in configure step
+  -> not needed, this can be taken from the servers my_config.h
 
 - debug configure option should be aware of -DDBUG_* in CFLAGS
+  -> a new autoconf macro now checks whether the server that the
+     UDF compiles against has debug enabled, no need to configure
+     this on the UDF level itself
+
+- DECIMAL parameters now supported?
 
