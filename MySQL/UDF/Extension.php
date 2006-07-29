@@ -61,7 +61,7 @@ class CodeGen_MySQL_UDF_Extension
     * 
     * @return string
     */
-    static function version() 
+    function version() 
     {
         return "@package_version@";
     }
@@ -71,7 +71,7 @@ class CodeGen_MySQL_UDF_Extension
     *
     * @return string
     */
-    static function copyright()
+    function copyright()
     {
         return "Copyright (c) 2003-2005 Hartmut Holzgraefe";
     }
