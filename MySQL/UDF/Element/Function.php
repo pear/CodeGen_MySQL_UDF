@@ -281,7 +281,8 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  string  default value
      * @return bool    success status
      */
-    function addParam($name, $type, $optional = null, $default = null) {
+    function addParam($name, $type, $optional = null, $default = null) 
+    {
         if (isset($this->params[$name])) {
             return PEAR::raiseError("duplicate parameter name '$name'");
         }
@@ -363,7 +364,8 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  stirng  default value
      * @return bool    success status
      */
-    function addDataElement($name, $type, $default=false) {
+    function addDataElement($name, $type, $default=false) 
+    {
         if (isset($this->dataElements[$name])) {
             return PEAR::raiseError("duplicate data element name '$name'");
         }
@@ -698,7 +700,7 @@ class CodeGen_MySQL_UDF_Element_Function
         echo "\n";
                 
         // check parameter count
-        if ($this->optionalParams){
+        if ($this->optionalParams) {
             echo "    if ((args->arg_count < {$this->mandatoryParams}) || (args->arg_count > {$this->totalParams})) {\n";
         } else {
             echo "    if (args->arg_count != {$this->totalParams}) {\n";
@@ -894,7 +896,8 @@ class CodeGen_MySQL_UDF_Element_Function
      *
      * @return  string  C code
      */
-    function returnType() {
+    function returnType() 
+    {
         switch ($this->returns) {
         case "int":
             return "long long";
@@ -919,7 +922,8 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  void
      * @return string
      */
-    function signature() {
+    function signature() 
+    {
         $signature = "";
         if ($this->type == "aggregate") {
             $signature.= "AGGREGATE ";
@@ -947,7 +951,8 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  object  Extension to generate for
      * @return string
      */
-    function createStatement($extension) {
+    function createStatement($extension) 
+    {
         $create = "CREATE ";
         $create.= $this->signature();
         $create.= ' SONAME "'.$extension->getName().'.so";';
@@ -961,7 +966,8 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  object  Extension to generate for
      * @return string
      */
-    function dropStatement($extension) {
+    function dropStatement($extension) 
+    {
         return "DROP FUNCTION {$this->name};";
     }
 
@@ -971,139 +977,149 @@ class CodeGen_MySQL_UDF_Element_Function
      * @param  object  Extension to generate for
      * @return string
      */
-    function dropIfExistsStatement($extension) {
-        return "DROP FUNCTION IF EXISTS {$this->name};";
+    function dropIfExistsStatement($extension) 
+    {
+        /* there is no DROP FUNCTION IF EXISTS in MySQL < 5.0 so we
+         check for the error code for dropping a noneexistant function
+         which is 1128 in 4.1 and 1305 in 5.0 ... */
+        return "--error 0, 1128, 1305\nDROP FUNCTION {$this->name};";
     }
 
 
-	/**
-	 * test code snippet
-	 *
-	 * @var string
-	 */
-	protected $testCode = "";
-	
-	/**
-	 * testCode setter
-	 *
-	 * @param  string code snippet
-	 */
-	function setTestCode($code)
-	{
-	  $this->testCode = $code;
-	}
-	
-	/**
-	 * testCode getter
-	 *
-	 * @return string
-	 */
-	function getTestCode()
-	{
-	  return $this->testCode;
-	}
-	
-	
-	/**
-	 * expected test result string
-	 *
-	 * @var array
-	 */
-	protected $testResult = "";
-	
-	/**
-	 * testResult setter
-	 *
-	 * @param  string result text
-	 */
-	function setTestResult($text)
-	{
-	  $this->testResult = $text;
-	}
-	
-	/**
-	 * testResult getter
-	 *
-	 * @return string
-	 */
-	function getTestResult()
-	{
-	  return $this->testResult;
-	}
-	
-	
-	/**
-	 * test code description
-	 *
-	 * @var string
-	 */
-	protected $testDescription = "";
-	
-	/**
-	 * testDescritpion setter
-	 *
-	 * @param  string text
-	 */
-	function setTestDescription($text)
-	{
-	  $this->testDescription = $text;
-	}
-	
-	/**
-	 * testDescription getter
-	 *
-	 * @return string
-	 */
-	function getTestDescription()
-	{
-	  return $this->testDescription;
-	}
-	
-	
-	/**
-	 * write test case for this function
-	 *
-	 * @access public
-	 * @param  class Extension  extension the function is part of
-	 */
-	function writeTest(CodeGen_MySQL_UDF_Extension $extension) 
-	{
-	  $test = $this->createTest($extension);
-	  
-	  if ($test instanceof CodeGen_MySQL_Element_Test) {
-		$test->writeTest($extension);
-	  }
-	}
-	
-	/**
-	 * Create test case for this function
-	 *
-	 * @access public
-	 * @param  object  extension the function is part of
-	 * @return object  generated test case
-	 */
-	function createTest(CodeGen_MySQL_UDF_Extension $extension) 
-	{
-	  if (!$this->testCode) {
-		return false;
-	  }
-	  
-	  $test = new CodeGen_MySQL_UDF_Element_Test;
+    /**
+     * test code snippet
+     *
+     * @var string
+     */
+    protected $testCode = "";
+    
+    /**
+     * testCode setter
+     *
+     * @param  string code snippet
+     */
+    function setTestCode($code)
+    {
+        $this->testCode = $code;
+    }
+    
+    /**
+     * testCode getter
+     *
+     * @return string
+     */
+    function getTestCode()
+    {
+        return $this->testCode;
+    }
+    
+    
+    /**
+     * expected test result string
+     *
+     * @var array
+     */
+    protected $testResult = "";
+    
+    /**
+     * testResult setter
+     *
+     * @param  string result text
+     */
+    function setTestResult($text)
+    {
+        $this->testResult = $text;
+    }
+    
+    /**
+     * testResult getter
+     *
+     * @return string
+     */
+    function getTestResult()
+    {
+        return $this->testResult;
+    }
+    
+    
+    /**
+     * test code description
+     *
+     * @var string
+     */
+    protected $testDescription = "";
+    
+    /**
+     * testDescritpion setter
+     *
+     * @param  string text
+     */
+    function setTestDescription($text)
+    {
+        $this->testDescription = $text;
+    }
+    
+    /**
+     * testDescription getter
+     *
+     * @return string
+     */
+    function getTestDescription()
+    {
+        return $this->testDescription;
+    }
+    
+    
+    /**
+     * write test case for this function
+     *
+     * @access public
+     * @param  class Extension  extension the function is part of
+     */
+    function writeTest(CodeGen_MySQL_UDF_Extension $extension) 
+    {
+        $test = $this->createTest($extension);
+      
+        if ($test instanceof CodeGen_MySQL_Element_Test) {
+            $test->writeTest($extension);
+        }
+    }
+    
+    /**
+     * Create test case for this function
+     *
+     * @access public
+     * @param  object  extension the function is part of
+     * @return object  generated test case
+     */
+    function createTest(CodeGen_MySQL_UDF_Extension $extension) 
+    {
+        if (!$this->testCode) {
+            return false;
+        }
+      
+        $test = new CodeGen_MySQL_UDF_Element_Test;
             
-	  $test->setName($this->name);
+        $test->setName($this->name);
 
-	  if ($this->testDescription) {
-		$test->setDescription($this->testDescription);
-	  }
+        if ($this->testDescription) {
+            $test->setDescription($this->testDescription);
+        }
             
-	  $test->setCode($this->testCode);
+        $test->setCode($this->testCode);
       
-	  if (!empty($this->testResult)) {
-		$test->setResult($this->testResult);
-	  }
+        if (!empty($this->testResult)) {
+            $test->setResult($this->testResult);
+        }
       
-	  return $test;
-	}
+        return $test;
+    }
 }
 
-?>
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * indent-tabs-mode:nil
+ * End:
+ */

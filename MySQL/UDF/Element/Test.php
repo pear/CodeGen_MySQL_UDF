@@ -48,24 +48,24 @@ class CodeGen_MySQL_UDF_Element_Test
     {
         $extName = $extension->getName();
 
-        $testName   = "tests/t/{$this->name}.test";
+        $testName = "tests/t/{$this->name}.test";
         $extension->addPackageFile("test", $testName);
 
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$testName);		
-		echo "# Package: $extName   Test: {$this->name}\n#\n";
-		echo preg_replace("/^/m", "# ", $this->description)."\n\n";
-		echo "-- disable_query_log\n";
-		echo "-- disable_metadata\n\n";
-		echo "-- source create_functions.inc\n\n";
-		echo $this->code;
-		echo "\n-- source drop_functions.inc\n";		
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$testName);        
+        echo "# Package: $extName   Test: {$this->name}\n#\n";
+        echo preg_replace("/^/m", "# ", $this->description)."\n\n";
+        echo "-- disable_query_log\n";
+        echo "-- disable_metadata\n\n";
+        echo "-- source create_functions.inc\n\n";
+        echo $this->code;
+        echo "\n-- source drop_functions.inc\n";        
         $file->write();
 
         $resultName = "tests/r/{$this->name}.result";
         $extension->addPackageFile("test", $resultName);
 
-        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$resultName);		
-		echo $this->result;
+        $file = new CodeGen_Tools_Outbuf($extension->dirpath."/".$resultName);      
+        echo $this->result;
         $file->write();
     }
 }

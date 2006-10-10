@@ -99,8 +99,6 @@ class CodeGen_MySQL_UDF_Extension
     {
         parent::__construct();
 
-        $this->addConfigFragment("WITH_MYSQL()", "bottom");
-
         $this->addConfigFragment("MYSQL_USE_UDF_API()", "bottom");
     }
     
@@ -221,14 +219,15 @@ class CodeGen_MySQL_UDF_Extension
 
 
 
-  // {{{ code file
+    // {{{ code file
 
     /**
      * Write the complete C code file
      *
      * @access protected
      */
-    function writeCodeFile() {
+    function writeCodeFile() 
+    {
         $filename = "{$this->name}.".$this->language;  
 
         $this->addPackageFile('c', $filename); 

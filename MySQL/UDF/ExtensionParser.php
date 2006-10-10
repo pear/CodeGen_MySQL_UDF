@@ -125,12 +125,12 @@ class CodeGen_MySQL_UDF_ExtensionParser
     
     function tagstart_function_param($attr) 
     {
-        if (!isset($attr['name']))  {
+        if (!isset($attr['name'])) {
             return PEAR::raiseError("name attribut for parameter missing");
         }
         
-        if (!isset($attr['type']))  {
-                return PEAR::raiseError("type attribut for parameter missing");
+        if (!isset($attr['type'])) {
+            return PEAR::raiseError("type attribut for parameter missing");
         }
         
         return $this->helper->addParam($attr['name'], $attr['type'], @$attr['optional'], @$attr['default']);
@@ -250,7 +250,8 @@ class CodeGen_MySQL_UDF_ExtensionParser
 
         
 
-    function tagend_udf_code($attr, $data) {
+    function tagend_udf_code($attr, $data) 
+    {
         return $this->tagend_extension_code($attr, $data);
     }
 
