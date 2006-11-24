@@ -28,24 +28,19 @@
 
   <release>
     <state>beta</state>
-    <version>0.9.6dev</version>
+    <version>0.9.7dev</version>
     <date>2006-11-24</date>
     <notes>
      still trying to stabelize for release
 
-     changes since 0.9.5:
-      - added CodeGen_MySQL dependency
-      - removed 'static' attributes from some functions
-        to play nice with PHP 5.2
-      - CS fixes
-      - workaround for missing DROP FUNCTION IF EXISTS in tests
-      - fixed php binary path substitution in udf-gen script
+     changes since 0.9.6:
+     - packaging fixes
     </notes>
     <deps>
       <dep type="php" rel="ge" version="5.0"/>
       <dep type="pkg" rel="ge" version="1.2">PEAR</dep>
       <dep type="pkg" rel="ge" version="0.9">CodeGen</dep>
-      <dep type="pkg" rel="ge" version="0.1.1">CodeGen_MySQL</dep>
+      <dep type="pkg" rel="ge" version="0.1.2dev">CodeGen_MySQL</dep>
     </deps>
     <filelist>
       <dir name="/" baseinstalldir="/">
@@ -83,6 +78,22 @@
   </release>
 
   <changelog>
+   <release>
+    <state>beta</state>
+    <version>0.9.6dev</version>
+    <date>2006-11-24</date>
+    <notes>
+     still trying to stabelize for release
+
+     changes since 0.9.5:
+      - added CodeGen_MySQL dependency
+      - removed 'static' attributes from some functions
+        to play nice with PHP 5.2
+      - CS fixes
+      - workaround for missing DROP FUNCTION IF EXISTS in tests
+      - fixed php binary path substitution in udf-gen script
+    </notes>
+   </release>
    <release>
     <state>beta</state>
     <version>0.9.5dev</version>
