@@ -28,20 +28,29 @@
 
   <release>
     <state>beta</state>
-    <version>0.9.5dev</version>
-    <date>2006-05-06</date>
+    <version>0.9.6dev</version>
+    <date>2006-11-24</date>
     <notes>
-     trying to stabelize for release
+     still trying to stabelize for release
+
+     changes since 0.9.5:
+      - added CodeGen_MySQL dependency
+      - removed 'static' attributes from some functions
+        to play nice with PHP 5.2
+      - CS fixes
+      - workaround for missing DROP FUNCTION IF EXISTS in tests
+      - fixed php binary path substitution in udf-gen script
     </notes>
     <deps>
       <dep type="php" rel="ge" version="5.0"/>
       <dep type="pkg" rel="ge" version="1.2">PEAR</dep>
       <dep type="pkg" rel="ge" version="0.9">CodeGen</dep>
+      <dep type="pkg" rel="ge" version="0.1.1">CodeGen_MySQL</dep>
     </deps>
     <filelist>
       <dir name="/" baseinstalldir="/">
         <file role="script" name="udf-gen">
-          <replace from="/usr/local/bin" to="PHP_BINDIR" type="php-const" />
+          <replace from="/usr/local/bin/php" to="php_bin" type="pear-config" />
           <replace from="@php_dir@"  to="php_dir"  type="pear-config" />
         </file>
         <dir name="docs">
@@ -72,5 +81,16 @@
       </dir>
     </filelist>
   </release>
+
+  <changelog>
+   <release>
+    <state>beta</state>
+    <version>0.9.5dev</version>
+    <date>2006-05-06</date>
+    <notes>
+     trying to stabelize for release
+    </notes>
+   </release>
+  </changelog>
 </package>
 
