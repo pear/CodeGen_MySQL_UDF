@@ -146,7 +146,7 @@ class CodeGen_MySQL_UDF_Extension
         
         $upname = strtoupper($this->name);
         
-        echo $this->getLicense();
+        echo $this->getLicenseComment();
         echo "#ifndef UDF_{$upname}_H\n";
         echo "#define UDF_{$upname}_H\n\n";   
 
@@ -236,7 +236,7 @@ class CodeGen_MySQL_UDF_Extension
         
         $upname = strtoupper($this->name);
 
-        echo $this->getLicense();
+        echo $this->getLicenseComment();
 
         echo "// {{{ CREATE and DROP statements for this UDF\n\n";
         echo "/*\n";
