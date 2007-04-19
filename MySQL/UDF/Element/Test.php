@@ -16,7 +16,7 @@
  * @copyright  2005 Hartmut Holzgraefe
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  * @version    CVS: $Id$
- * @link       http://pear.php.net/package/CodeGen
+ * @link       http://pear.php.net/package/CodeGen_UDF
  */
 
 /**
@@ -33,7 +33,7 @@ require_once "CodeGen/MySQL/Element/Test.php";
  * @copyright  2005 Hartmut Holzgraefe
  * @license    http://www.php.net/license/3_0.txt  PHP License 3.0
  * @version    Release: @package_version@
- * @link       http://pear.php.net/package/CodeGen
+ * @link       http://pear.php.net/package/CodeGen_UDF
  */
 class CodeGen_MySQL_UDF_Element_Test
     extends CodeGen_MySQL_Element_Test

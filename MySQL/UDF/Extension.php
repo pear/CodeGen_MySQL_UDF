@@ -99,6 +99,8 @@ class CodeGen_MySQL_UDF_Extension
     {
         parent::__construct();
 
+        $this->archivePrefix = "UDF";
+
         $this->addConfigFragment("MYSQL_USE_UDF_API()", "bottom");
     }
     
