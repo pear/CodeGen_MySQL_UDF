@@ -172,29 +172,14 @@ class CodeGen_MySQL_UDF_Element_Function
     protected $null = 0;
 
     /**
-     * Decimals setter
+     * NULL setter
      *
-     * @param  mixed  truth value
+     * @param  bool  truth value
      * @return bool   success status
      */
     function setNull($null) 
     {
-        switch (strtolower($null)) {
-        case "yes":
-        case "true":
-        case "1":
-            $this->null = 1;
-            return true;
-
-        case "no":
-        case "false":
-        case "0":
-            $this->null = 0;
-            return true;
-
-        default:
-            return PEAR::raiseError("'$null' is not a valid value for the 'null' attribute");
-        }
+        $this->null = $null;
     }
 
 

@@ -74,7 +74,11 @@ class CodeGen_MySQL_UDF_ExtensionParser
         }
         
         if (isset($attr['null'])) {
-            $err = $this->helper->setNull($attr['null']);
+            $null = $this->toBool($attr["null"], "null");
+            if (PEAR::isError($null)) {
+                return $null;
+            }
+            $err = $this->helper->setNull($null);
             if (PEAR::isError($err)) {
                 return $err;
             }
